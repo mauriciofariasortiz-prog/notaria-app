@@ -1,22 +1,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ASUNTOS, PASOS_POR_ASUNTO } from '../asuntoPasos'
 
 function Field({ label, required, error, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-      <label style={{
-        fontSize: '10px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase',
-        color: error ? '#e05252' : 'var(--text-muted)',
-      }}>
+      <label style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: error ? '#e05252' : 'var(--text-muted)' }}>
         {label}{required && <span style={{ color: 'var(--gold)', marginLeft: '3px' }}>*</span>}
       </label>
       {children}
-      {error && (
-        <span style={{ fontSize: '11px', color: '#e05252', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          ⚠ {error}
-        </span>
-      )}
+      {error && <span style={{ fontSize: '11px', color: '#e05252' }}>⚠ {error}</span>}
     </div>
   )
 }
@@ -24,9 +18,7 @@ function Field({ label, required, error, children }) {
 function SectionDivider({ children }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-      <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold)', whiteSpace: 'nowrap' }}>
-        {children}
-      </span>
+      <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold)', whiteSpace: 'nowrap' }}>{children}</span>
       <div style={{ flex: 1, height: '1px', background: 'var(--gold-border)' }} />
     </div>
   )
@@ -38,7 +30,7 @@ export default function NuevoTrabajo() {
     cliente: '', asunto: '', fecha_ingreso: new Date().toISOString().split('T')[0],
     descripcion: '', encargado_id: '', notas: '',
   })
-  const [errors, setErrors]   = useState({})
+  const [errors,  setErrors]  = useState({})
   const [touched, setTouched] = useState({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -55,6 +47,7 @@ export default function NuevoTrabajo() {
   const validate = (f) => {
     const e = {}
     if (!f.cliente.trim()) e.cliente = 'El nombre del cliente es requerido'
+    if (!f.asunto) e.asunto = 'Selecciona un asunto'
     return e
   }
 
@@ -77,33 +70,44 @@ export default function NuevoTrabajo() {
     setErrors(errs)
     if (Object.keys(errs).length > 0) return
     setLoading(true)
-    const { error } = await supabase.from('trabajos').insert([{
-      cliente:      form.cliente,
-      asunto:       form.asunto,
+
+    // 1. Insertar el trabajo
+    const { data: nuevo, error } = await supabase.from('trabajos').insert([{
+      cliente:       form.cliente,
+      asunto:        form.asunto,
       fecha_ingreso: form.fecha_ingreso,
-      descripcion:  form.descripcion,
-      encargado_id: form.encargado_id || null,
-      notas:        form.notas,
-      status:       'en_proceso',
-    }])
-    if (!error) {
+      descripcion:   form.descripcion,
+      encargado_id:  form.encargado_id || null,
+      notas:         form.notas,
+      status:        'en_proceso',
+    }]).select().single()
+
+    if (!error && nuevo) {
+      // 2. Generar checklist automático según asunto
+      const pasos = PASOS_POR_ASUNTO[form.asunto] || []
+      if (pasos.length > 0) {
+        await supabase.from('checklist').insert(
+          pasos.map(paso => ({ trabajo_id: nuevo.id, paso, estado: 'pendiente' }))
+        )
+      }
       if (empleadoParam) navigate(`/empleados/${empleadoParam}`)
       else navigate('/trabajos')
     }
+
     setLoading(false)
   }
 
   const goBack = () => empleadoParam ? navigate(`/empleados/${empleadoParam}`) : navigate('/trabajos')
   const inputClass = (name) => `field-input${errors[name] ? ' error' : ''}`
 
+  // Preview de pasos del asunto seleccionado
+  const pasosPreview = form.asunto ? PASOS_POR_ASUNTO[form.asunto] || [] : []
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* Header */}
-      <div style={{
-        background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)',
-        padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', gap: '12px',
-      }}>
+      <div style={{ background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button
           onClick={goBack}
           style={{ background: 'transparent', border: 'none', color: 'var(--gold)', fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '0 4px', transition: 'transform 0.15s' }}
@@ -118,46 +122,45 @@ export default function NuevoTrabajo() {
       <div style={{ padding: '1.5rem', maxWidth: '660px', margin: '0 auto' }}>
         <form onSubmit={handleSubmit} noValidate className="anim-scale-in">
 
-          {/* ── Identificación ── */}
+          {/* Identificación */}
           <SectionDivider>Identificación</SectionDivider>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '14px', boxShadow: 'var(--shadow-sm)' }}>
             <Field label="Cliente" required error={errors.cliente}>
-              <input
-                name="cliente" value={form.cliente}
-                onChange={handleChange} onBlur={handleBlur}
-                placeholder="Nombre completo del cliente o empresa"
-                className={inputClass('cliente')}
-              />
+              <input name="cliente" value={form.cliente} onChange={handleChange} onBlur={handleBlur} placeholder="Nombre completo del cliente o empresa" className={inputClass('cliente')} />
             </Field>
-            <Field label="Asunto">
-              <input
-                name="asunto" value={form.asunto}
-                onChange={handleChange}
-                placeholder="Ej. Compraventa, Testamento, Poder notarial..."
-                className="field-input"
-              />
+
+            <Field label="Asunto" required error={errors.asunto}>
+              <select name="asunto" value={form.asunto} onChange={handleChange} onBlur={handleBlur} className={inputClass('asunto')}>
+                <option value="">Selecciona el tipo de asunto...</option>
+                {ASUNTOS.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
             </Field>
+
+            {/* Preview de pasos */}
+            {pasosPreview.length > 0 && (
+              <div style={{ background: 'var(--gold-light)', border: '1px solid var(--gold-border)', borderRadius: '4px', padding: '10px 14px' }}>
+                <p style={{ fontSize: '10px', fontWeight: '700', color: 'var(--gold-dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '7px' }}>
+                  Checklist que se generará ({pasosPreview.length} pasos)
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                  {pasosPreview.map((paso, i) => (
+                    <span key={i} style={{ fontSize: '11px', background: 'white', border: '1px solid var(--gold-border)', borderRadius: '99px', padding: '2px 10px', color: 'var(--navy-dark)', fontWeight: '500' }}>
+                      {paso}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Field label="Fecha de ingreso">
-              <input
-                name="fecha_ingreso" value={form.fecha_ingreso}
-                onChange={handleChange}
-                type="date"
-                className="field-input"
-              />
+              <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
             </Field>
             <Field label="Descripción">
-              <textarea
-                name="descripcion" value={form.descripcion}
-                onChange={handleChange}
-                placeholder="Detalles adicionales del asunto..."
-                rows={3}
-                className="field-input"
-                style={{ resize: 'vertical' }}
-              />
+              <textarea name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Detalles adicionales del asunto..." rows={3} className="field-input" style={{ resize: 'vertical' }} />
             </Field>
           </div>
 
-          {/* ── Asignación ── */}
+          {/* Asignación */}
           <SectionDivider>Asignación</SectionDivider>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px', boxShadow: 'var(--shadow-sm)' }}>
             <Field label="Encargado">
@@ -167,18 +170,10 @@ export default function NuevoTrabajo() {
               </select>
             </Field>
             <Field label="Notas">
-              <textarea
-                name="notas" value={form.notas}
-                onChange={handleChange}
-                placeholder="Instrucciones especiales, documentos pendientes..."
-                rows={3}
-                className="field-input"
-                style={{ resize: 'vertical' }}
-              />
+              <textarea name="notas" value={form.notas} onChange={handleChange} placeholder="Instrucciones especiales, documentos pendientes..." rows={3} className="field-input" style={{ resize: 'vertical' }} />
             </Field>
           </div>
 
-          {/* Acciones */}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <button type="button" onClick={goBack} className="btn-ghost-dark">Cancelar</button>
             <button type="submit" disabled={loading} className="btn-gold" style={{ padding: '10px 24px' }}>
