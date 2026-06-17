@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate } from 'react-router-dom'
 
@@ -106,13 +106,93 @@ function ResultadoBusqueda({ trabajo, empNombre, onClick }) {
   )
 }
 
+/* ── Bell / Notificaciones ── */
+function diasSinMovimiento(ultima_actividad) {
+  if (!ultima_actividad) return 0
+  const diff = Date.now() - new Date(ultima_actividad).getTime()
+  return Math.floor(diff / (1000 * 60 * 60 * 24))
+}
+
+function BellButton({ trabajosStale, onVerTrabajo }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const count = trabajosStale.length
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ position: 'relative', background: open ? 'rgba(197,169,106,0.2)' : 'transparent', border: `1px solid ${open ? 'rgba(197,169,106,0.5)' : 'rgba(138,155,173,0.35)'}`, borderRadius: '5px', color: count > 0 ? '#C5A96A' : '#8A9BAD', fontSize: '16px', padding: '5px 10px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '4px' }}
+        onMouseEnter={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(197,169,106,0.5)'; e.currentTarget.style.color = '#C5A96A' } }}
+        onMouseLeave={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = count > 0 ? '#C5A96A' : '#8A9BAD' } }}
+        title="Trabajos sin movimiento"
+      >
+        🔔
+        {count > 0 && (
+          <span style={{ background: '#e05252', color: '#fff', borderRadius: '99px', fontSize: '10px', fontWeight: '700', padding: '1px 6px', minWidth: '18px', textAlign: 'center', lineHeight: '16px' }}>
+            {count}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="anim-slide-down" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: '#fff', borderRadius: '8px', boxShadow: '0 12px 40px rgba(20,40,69,0.22)', border: '1px solid #e5e7eb', zIndex: 200, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', background: '#fafbfc' }}>
+            <p style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#142845' }}>
+              Sin movimiento · +7 días
+            </p>
+            {count === 0 && (
+              <p style={{ fontSize: '12px', color: '#8A9BAD', marginTop: '4px' }}>Todos los trabajos están al día ✓</p>
+            )}
+          </div>
+          {count > 0 && (
+            <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
+              {trabajosStale.map(t => {
+                const dias = diasSinMovimiento(t.ultima_actividad)
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => { onVerTrabajo(t.id); setOpen(false) }}
+                    style={{ padding: '10px 16px', borderBottom: '1px solid #f5f5f5', cursor: 'pointer', transition: 'background 0.12s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#f7f8fa'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '14px', fontWeight: '500', color: '#142845', marginBottom: '2px' }}>
+                      {[t.asunto, t.cliente].filter(Boolean).join(' · ')}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: '700', color: '#e05252' }}>
+                        {dias} día{dias !== 1 ? 's' : ''} sin cambios
+                      </span>
+                      {t.emp_nombre && (
+                        <span style={{ fontSize: '10px', color: '#8A9BAD' }}>· {t.emp_nombre}</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Trabajos() {
-  const [empleados, setEmpleados] = useState([])
-  const [userName,  setUserName]  = useState('')
-  const [loading,   setLoading]   = useState(true)
-  const [busqueda,  setBusqueda]  = useState('')
-  const [todosJobs, setTodosJobs] = useState([])
-  const [empMap,    setEmpMap]    = useState({})
+  const [empleados,     setEmpleados]     = useState([])
+  const [userName,      setUserName]      = useState('')
+  const [loading,       setLoading]       = useState(true)
+  const [busqueda,      setBusqueda]      = useState('')
+  const [todosJobs,     setTodosJobs]     = useState([])
+  const [empMap,        setEmpMap]        = useState({})
+  const [trabajosStale, setTrabajosStale] = useState([])
   const navigate = useNavigate()
 
   useEffect(() => { cargar() }, [])
@@ -121,7 +201,7 @@ export default function Trabajos() {
     const [{ data: { user } }, { data: emps }, { data: allJobs }] = await Promise.all([
       supabase.auth.getUser(),
       supabase.from('empleados').select('id, nombre').order('nombre'),
-      supabase.from('trabajos').select('id, encargado_id, cliente, asunto, fecha_ingreso, numero_escritura, status'),
+      supabase.from('trabajos').select('id, encargado_id, cliente, asunto, fecha_ingreso, numero_escritura, status, ultima_actividad'),
     ])
 
     if (user) {
@@ -140,9 +220,17 @@ export default function Trabajos() {
     const idx = lista.findIndex(e => e.nombre === 'Mauricio FV')
     if (idx > 0) { const [mfv] = lista.splice(idx, 1); lista.unshift(mfv) }
 
+    // Trabajos en proceso sin movimiento en 7+ días
+    const hace7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const stale = (allJobs || [])
+      .filter(j => j.status !== 'completado' && j.ultima_actividad && new Date(j.ultima_actividad) < hace7)
+      .map(j => ({ ...j, emp_nombre: map[j.encargado_id] || null }))
+      .sort((a, b) => new Date(a.ultima_actividad) - new Date(b.ultima_actividad))
+
     setEmpleados(lista)
     setTodosJobs(allJobs || [])
     setEmpMap(map)
+    setTrabajosStale(stale)
     setLoading(false)
   }
 
@@ -151,7 +239,6 @@ export default function Trabajos() {
     navigate('/login')
   }
 
-  // Búsqueda global
   const resultados = useMemo(() => {
     if (!busqueda.trim()) return []
     const q = busqueda.toLowerCase()
@@ -175,8 +262,20 @@ export default function Trabajos() {
           </div>
           <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Notaría Pública No. 120 · Monterrey</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {userName && <span style={{ fontSize: '12px', fontWeight: '500', color: '#8A9BAD' }}>{userName}</span>}
+
+          {/* Campana */}
+          <BellButton trabajosStale={trabajosStale} onVerTrabajo={id => navigate(`/trabajos/${id}`)} />
+
+          {/* Calendario */}
+          <button
+            onClick={() => navigate('/calendario')}
+            style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C5A96A'; e.currentTarget.style.color = '#C5A96A' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
+          >📅 Calendario</button>
+
           <button
             onClick={() => navigate('/trabajos/nuevo')}
             style={{ background: '#C5A96A', border: 'none', borderRadius: '5px', color: '#142845', fontSize: '11px', fontWeight: '700', padding: '6px 14px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s, transform 0.15s' }}
@@ -217,7 +316,6 @@ export default function Trabajos() {
 
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 24px 56px' }}>
 
-        {/* Resultados de búsqueda global */}
         {busqueda.trim() ? (
           <>
             <SectionTitle>
@@ -257,7 +355,6 @@ export default function Trabajos() {
                     <AbogadoCard emp={principal} big onClick={() => navigate(`/empleados/${principal.id}`)} />
                   </div>
                 )}
-
                 <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '14px' }}>
                   {resto.map((emp, i) => (
                     <div key={emp.id} className={`anim-fade-up stagger-${i + 1}`}>
