@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -26,6 +26,32 @@ function SectionLabel({ children, count }) {
   )
 }
 
+function fechaLimiteBadge(fecha_limite) {
+  if (!fecha_limite) return null
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const limite = new Date(fecha_limite + 'T00:00:00')
+  const diff = Math.ceil((limite - hoy) / (1000 * 60 * 60 * 24))
+
+  let color, bg, border, texto
+  if (diff < 0) {
+    color = '#c0392b'; bg = 'rgba(192,57,43,0.09)'; border = 'rgba(192,57,43,0.3)'
+    texto = `Vencida hace ${Math.abs(diff)} día${Math.abs(diff) !== 1 ? 's' : ''}`
+  } else if (diff <= 3) {
+    color = '#B07D2A'; bg = 'rgba(197,169,106,0.15)'; border = 'rgba(197,169,106,0.45)'
+    texto = diff === 0 ? 'Vence hoy' : `Vence en ${diff} día${diff !== 1 ? 's' : ''}`
+  } else {
+    color = '#2d7a4f'; bg = 'rgba(45,122,79,0.09)'; border = 'rgba(45,122,79,0.25)'
+    texto = limite.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
+  }
+
+  return (
+    <span style={{ fontSize: '10px', fontWeight: '600', padding: '2px 8px', borderRadius: '99px', background: bg, color, border: `1px solid ${border}`, whiteSpace: 'nowrap' }}>
+      {texto}
+    </span>
+  )
+}
+
 function TrabajoCard({ t, onClick, index }) {
   const prog = t.prog
   const porcentaje = prog && prog.aplicables > 0 ? Math.round((prog.hechos / prog.aplicables) * 100) : null
@@ -39,10 +65,16 @@ function TrabajoCard({ t, onClick, index }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          {/* Título */}
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: '500', color: 'var(--navy-dark)', marginBottom: '6px', lineHeight: 1.2 }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: '500', color: 'var(--navy-dark)', marginBottom: '4px', lineHeight: 1.2 }}>
             {[t.asunto, t.cliente].filter(Boolean).join(' · ') || t.cliente}
           </p>
+
+          {/* Folio */}
+          {t.numero_escritura && (
+            <p style={{ fontSize: '11px', color: 'var(--gold)', fontWeight: '600', marginBottom: '4px' }}>
+              Escritura / Folio: {t.numero_escritura}
+            </p>
+          )}
 
           {/* Progreso */}
           {prog && prog.total > 0 && (
@@ -65,15 +97,18 @@ function TrabajoCard({ t, onClick, index }) {
             </div>
           )}
 
-          {/* Fecha */}
-          {t.fecha_ingreso && (
-            <p style={{ fontSize: '11px', color: 'var(--text-light)' }}>
-              Ingreso: {new Date(t.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-MX')}
-            </p>
-          )}
+          {/* Fechas */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {t.fecha_ingreso && (
+              <p style={{ fontSize: '11px', color: 'var(--text-light)' }}>
+                Ingreso: {new Date(t.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-MX')}
+              </p>
+            )}
+            {t.fecha_limite && fechaLimiteBadge(t.fecha_limite)}
+          </div>
         </div>
 
-        {/* Badge */}
+        {/* Badge estado */}
         {esCompleto ? (
           <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', background: 'rgba(45,122,79,0.09)', color: '#2d7a4f', border: '1px solid rgba(45,122,79,0.22)', flexShrink: 0, marginTop: '2px' }}>
             Completado
@@ -92,9 +127,14 @@ export default function EmpleadoTrabajos() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [empleado, setEmpleado] = useState(null)
-  const [enProceso,  setEnProceso]  = useState([])
-  const [completados, setCompletados] = useState([])
+  const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Filtros
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('todos')
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
 
   useEffect(() => { cargar() }, [id])
 
@@ -116,7 +156,6 @@ export default function EmpleadoTrabajos() {
         .select('trabajo_id, estado')
         .in('trabajo_id', ids)
 
-      // Progreso por trabajo
       const prog = {}
       ;(items || []).forEach(item => {
         if (!prog[item.trabajo_id]) prog[item.trabajo_id] = { total: 0, aplicables: 0, hechos: 0, pendientes: 0 }
@@ -128,22 +167,48 @@ export default function EmpleadoTrabajos() {
 
       const enriquecidos = jobs.map(j => {
         const p = prog[j.id] || { total: 0, aplicables: 0, hechos: 0, pendientes: 0 }
-        // Completado = ningún paso pendiente (todos son hecho o no_aplica) y hay al menos un paso
         const esCompleto = p.total > 0 && p.pendientes === 0
         return { ...j, prog: p, esCompleto }
       })
 
-      setEnProceso(enriquecidos.filter(t => !t.esCompleto))
-      setCompletados(enriquecidos.filter(t => t.esCompleto))
+      setTodos(enriquecidos)
     } else {
-      setEnProceso([])
-      setCompletados([])
+      setTodos([])
     }
 
     setLoading(false)
   }
 
-  const total = enProceso.length + completados.length
+  const filtrados = useMemo(() => {
+    return todos.filter(t => {
+      // Búsqueda por cliente o asunto
+      if (busqueda.trim()) {
+        const q = busqueda.toLowerCase()
+        if (!t.cliente?.toLowerCase().includes(q) && !t.asunto?.toLowerCase().includes(q)) return false
+      }
+      // Filtro estado
+      if (filtroEstado === 'en_proceso' && t.esCompleto) return false
+      if (filtroEstado === 'completado' && !t.esCompleto) return false
+      // Filtro fecha ingreso
+      if (filtroFechaDesde && t.fecha_ingreso < filtroFechaDesde) return false
+      if (filtroFechaHasta && t.fecha_ingreso > filtroFechaHasta) return false
+      return true
+    })
+  }, [todos, busqueda, filtroEstado, filtroFechaDesde, filtroFechaHasta])
+
+  const enProceso  = filtrados.filter(t => !t.esCompleto)
+  const completados = filtrados.filter(t => t.esCompleto)
+  const total = todos.length
+  const hayFiltros = busqueda || filtroEstado !== 'todos' || filtroFechaDesde || filtroFechaHasta
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setFiltroEstado('todos')
+    setFiltroFechaDesde('')
+    setFiltroFechaHasta('')
+  }
+
+  const inputStyle = { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '5px', padding: '7px 10px', fontSize: '12px', color: 'var(--navy-dark)', outline: 'none', fontFamily: 'inherit' }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -184,17 +249,63 @@ export default function EmpleadoTrabajos() {
 
         {/* Stats */}
         {!loading && total > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '1.25rem' }}>
             {[
-              { label: 'Total',       value: total,              accent: 'var(--navy-dark)' },
-              { label: 'En proceso',  value: enProceso.length,   accent: 'var(--amber)' },
-              { label: 'Completados', value: completados.length,  accent: 'var(--green)' },
+              { label: 'Total',       value: total,                                     accent: 'var(--navy-dark)' },
+              { label: 'En proceso',  value: todos.filter(t => !t.esCompleto).length,   accent: 'var(--amber)' },
+              { label: 'Completados', value: todos.filter(t => t.esCompleto).length,    accent: 'var(--green)' },
             ].map(({ label, value, accent }, i) => (
               <div key={label} className={`stat-card anim-fade-up stagger-${i + 1}`}>
                 <p style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '6px' }}>{label}</p>
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '34px', fontWeight: '500', color: accent, lineHeight: 1 }}>{value}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Búsqueda y filtros */}
+        {!loading && total > 0 && (
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: 'var(--shadow-sm)' }}>
+            {/* Barra de búsqueda */}
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: 'var(--text-light)', pointerEvents: 'none' }}>🔍</span>
+              <input
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar por cliente o asunto..."
+                style={{ ...inputStyle, width: '100%', paddingLeft: '30px', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Filtros en línea */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={inputStyle}>
+                <option value="todos">Todos los estados</option>
+                <option value="en_proceso">En proceso</option>
+                <option value="completado">Completados</option>
+              </select>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-light)', whiteSpace: 'nowrap' }}>Ingreso desde</span>
+                <input type="date" value={filtroFechaDesde} onChange={e => setFiltroFechaDesde(e.target.value)} style={inputStyle} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-light)', whiteSpace: 'nowrap' }}>hasta</span>
+                <input type="date" value={filtroFechaHasta} onChange={e => setFiltroFechaHasta(e.target.value)} style={inputStyle} />
+              </div>
+
+              {hayFiltros && (
+                <button onClick={limpiarFiltros} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '5px', padding: '6px 10px', fontSize: '11px', color: 'var(--text-light)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  Limpiar filtros
+                </button>
+              )}
+            </div>
+
+            {hayFiltros && (
+              <p style={{ fontSize: '11px', color: 'var(--text-light)', margin: 0 }}>
+                Mostrando {filtrados.length} de {total} trabajos
+              </p>
+            )}
           </div>
         )}
 
@@ -206,9 +317,12 @@ export default function EmpleadoTrabajos() {
           <div className="anim-fade-up" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>
             Este empleado no tiene trabajos asignados.
           </div>
+        ) : filtrados.length === 0 ? (
+          <div className="anim-fade-up" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>
+            No se encontraron trabajos con esos filtros.
+          </div>
         ) : (
           <>
-            {/* En proceso */}
             {enProceso.length > 0 && (
               <div style={{ marginBottom: '2rem' }} className="anim-fade-in">
                 <SectionLabel count={enProceso.length}>En proceso</SectionLabel>
@@ -220,7 +334,6 @@ export default function EmpleadoTrabajos() {
               </div>
             )}
 
-            {/* Completados */}
             {completados.length > 0 && (
               <div className="anim-fade-in">
                 <SectionLabel count={completados.length}>Completados</SectionLabel>

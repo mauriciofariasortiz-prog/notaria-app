@@ -28,7 +28,7 @@ export default function NuevoTrabajo() {
   const [empleados, setEmpleados] = useState([])
   const [form, setForm] = useState({
     cliente: '', asunto: '', fecha_ingreso: new Date().toISOString().split('T')[0],
-    descripcion: '', encargado_id: '', notas: '',
+    descripcion: '', encargado_id: '', numero_escritura: '', fecha_limite: '',
   })
   const [errors,  setErrors]  = useState({})
   const [touched, setTouched] = useState({})
@@ -71,19 +71,18 @@ export default function NuevoTrabajo() {
     if (Object.keys(errs).length > 0) return
     setLoading(true)
 
-    // 1. Insertar el trabajo
     const { data: nuevo, error } = await supabase.from('trabajos').insert([{
-      cliente:       form.cliente,
-      asunto:        form.asunto,
-      fecha_ingreso: form.fecha_ingreso,
-      descripcion:   form.descripcion,
-      encargado_id:  form.encargado_id || null,
-      notas:         form.notas,
-      status:        'en_proceso',
+      cliente:          form.cliente,
+      asunto:           form.asunto,
+      fecha_ingreso:    form.fecha_ingreso,
+      descripcion:      form.descripcion,
+      encargado_id:     form.encargado_id || null,
+      numero_escritura: form.numero_escritura || null,
+      fecha_limite:     form.fecha_limite || null,
+      status:           'en_proceso',
     }]).select().single()
 
     if (!error && nuevo) {
-      // 2. Generar checklist automático según asunto
       const pasos = PASOS_POR_ASUNTO[form.asunto] || []
       if (pasos.length > 0) {
         await supabase.from('checklist').insert(
@@ -100,7 +99,6 @@ export default function NuevoTrabajo() {
   const goBack = () => empleadoParam ? navigate(`/empleados/${empleadoParam}`) : navigate('/trabajos')
   const inputClass = (name) => `field-input${errors[name] ? ' error' : ''}`
 
-  // Preview de pasos del asunto seleccionado
   const pasosPreview = form.asunto ? PASOS_POR_ASUNTO[form.asunto] || [] : []
 
   return (
@@ -152,9 +150,19 @@ export default function NuevoTrabajo() {
               </div>
             )}
 
-            <Field label="Fecha de ingreso">
-              <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
+            <Field label="Número de escritura / Folio">
+              <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345 o Folio Real 678" className="field-input" />
             </Field>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <Field label="Fecha de ingreso">
+                <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
+              </Field>
+              <Field label="Fecha de entrega prometida">
+                <input name="fecha_limite" value={form.fecha_limite} onChange={handleChange} type="date" className="field-input" />
+              </Field>
+            </div>
+
             <Field label="Descripción">
               <textarea name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Detalles adicionales del asunto..." rows={3} className="field-input" style={{ resize: 'vertical' }} />
             </Field>
@@ -168,9 +176,6 @@ export default function NuevoTrabajo() {
                 <option value="">Sin asignar</option>
                 {empleados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
               </select>
-            </Field>
-            <Field label="Notas">
-              <textarea name="notas" value={form.notas} onChange={handleChange} placeholder="Instrucciones especiales, documentos pendientes..." rows={3} className="field-input" style={{ resize: 'vertical' }} />
             </Field>
           </div>
 

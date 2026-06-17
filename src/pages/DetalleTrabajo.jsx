@@ -24,15 +24,42 @@ function FV({ children }) {
   return <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '15px', color: 'var(--navy-dark)' }}>{children || '—'}</p>
 }
 
+function fechaLimiteBadge(fecha_limite) {
+  if (!fecha_limite) return null
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  const limite = new Date(fecha_limite + 'T00:00:00')
+  const diff = Math.ceil((limite - hoy) / (1000 * 60 * 60 * 24))
+
+  let color, bg, border, texto
+  if (diff < 0) {
+    color = '#c0392b'; bg = 'rgba(192,57,43,0.09)'; border = 'rgba(192,57,43,0.3)'
+    texto = `Vencida hace ${Math.abs(diff)} día${Math.abs(diff) !== 1 ? 's' : ''}`
+  } else if (diff <= 3) {
+    color = '#B07D2A'; bg = 'rgba(197,169,106,0.15)'; border = 'rgba(197,169,106,0.45)'
+    texto = diff === 0 ? 'Vence hoy' : `Vence en ${diff} día${diff !== 1 ? 's' : ''}`
+  } else {
+    color = '#2d7a4f'; bg = 'rgba(45,122,79,0.09)'; border = 'rgba(45,122,79,0.25)'
+    texto = `Entrega: ${limite.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}`
+  }
+
+  return (
+    <span style={{ display: 'inline-block', fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '99px', background: bg, color, border: `1px solid ${border}` }}>
+      {texto}
+    </span>
+  )
+}
+
 /* ── Modal edición ── */
 function EditModal({ trabajo, empleados, onClose, onSave }) {
   const [form, setForm] = useState({
-    cliente:       trabajo.cliente       || '',
-    asunto:        trabajo.asunto        || '',
-    fecha_ingreso: trabajo.fecha_ingreso || '',
-    descripcion:   trabajo.descripcion   || '',
-    encargado_id:  trabajo.encargado_id  || '',
-    notas:         trabajo.notas         || '',
+    cliente:          trabajo.cliente          || '',
+    asunto:           trabajo.asunto           || '',
+    fecha_ingreso:    trabajo.fecha_ingreso    || '',
+    descripcion:      trabajo.descripcion      || '',
+    encargado_id:     trabajo.encargado_id     || '',
+    numero_escritura: trabajo.numero_escritura || '',
+    fecha_limite:     trabajo.fecha_limite     || '',
   })
   const [saving, setSaving] = useState(false)
   const lbl = { fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }
@@ -44,9 +71,13 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
     if (!form.cliente.trim()) return
     setSaving(true)
     const { error } = await supabase.from('trabajos').update({
-      cliente: form.cliente, asunto: form.asunto,
-      fecha_ingreso: form.fecha_ingreso, descripcion: form.descripcion,
-      encargado_id: form.encargado_id || null, notas: form.notas,
+      cliente:          form.cliente,
+      asunto:           form.asunto,
+      fecha_ingreso:    form.fecha_ingreso,
+      descripcion:      form.descripcion,
+      encargado_id:     form.encargado_id || null,
+      numero_escritura: form.numero_escritura || null,
+      fecha_limite:     form.fecha_limite || null,
     }).eq('id', trabajo.id)
     if (!error) onSave(form)
     setSaving(false)
@@ -61,12 +92,12 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '13px' }}>
           <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold)' }}>Identificación</p>
-          {[['cliente','Cliente',true,'text'],['fecha_ingreso','Fecha de ingreso',false,'date']].map(([name, label, req, type]) => (
-            <div key={name} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={lbl}>{label}{req && <span style={{ color: 'var(--gold)' }}> *</span>}</label>
-              <input name={name} value={form[name]} onChange={handleChange} type={type} required={req} className="field-input" />
-            </div>
-          ))}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={lbl}>Cliente <span style={{ color: 'var(--gold)' }}>*</span></label>
+            <input name="cliente" value={form.cliente} onChange={handleChange} required className="field-input" />
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Asunto</label>
             <select name="asunto" value={form.asunto} onChange={handleChange} className="field-input">
@@ -74,10 +105,28 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
               {ASUNTOS.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={lbl}>Número de escritura / Folio</label>
+            <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345 o Folio Real 678" className="field-input" />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={lbl}>Fecha de ingreso</label>
+              <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={lbl}>Fecha de entrega prometida</label>
+              <input name="fecha_limite" value={form.fecha_limite} onChange={handleChange} type="date" className="field-input" />
+            </div>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Descripción</label>
             <textarea name="descripcion" value={form.descripcion} onChange={handleChange} rows={2} className="field-input" style={{ resize: 'vertical' }} />
           </div>
+
           <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold)', marginTop: '4px' }}>Asignación</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Encargado</label>
@@ -86,10 +135,7 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
               {empleados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
             </select>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={lbl}>Notas</label>
-            <textarea name="notas" value={form.notas} onChange={handleChange} rows={2} className="field-input" style={{ resize: 'vertical' }} />
-          </div>
+
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
             <button type="button" onClick={onClose} className="btn-ghost-dark">Cancelar</button>
             <button type="submit" disabled={saving} className="btn-gold" style={{ padding: '10px 22px' }}>
@@ -126,10 +172,8 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
         userSelect: 'none',
       }}
     >
-      {/* Grip handle */}
       <div style={{ color: 'var(--text-light)', fontSize: '13px', marginRight: '10px', flexShrink: 0, cursor: 'grab', lineHeight: 1 }}>⠿</div>
 
-      {/* Estado icon */}
       <div
         onClick={e => { e.stopPropagation(); onEstado(item.id, item.estado) }}
         style={{
@@ -147,7 +191,6 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
         {cfg.icon}
       </div>
 
-      {/* Nombre del paso */}
       <span
         onClick={e => { e.stopPropagation(); onEstado(item.id, item.estado) }}
         style={{
@@ -161,10 +204,119 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
         {item.paso}
       </span>
 
-      {/* Badge de estado */}
       <span style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: cfg.color, marginLeft: '10px', flexShrink: 0 }}>
         {cfg.label}
       </span>
+    </div>
+  )
+}
+
+/* ── Historial de Notas/Comentarios ── */
+function SeccionNotas({ trabajoId, empleados }) {
+  const [notas, setNotas] = useState([])
+  const [loadingNotas, setLoadingNotas] = useState(true)
+  const [nuevoTexto, setNuevoTexto] = useState('')
+  const [nuevoAutor, setNuevoAutor] = useState('')
+  const [guardando, setGuardando] = useState(false)
+
+  useEffect(() => {
+    cargarNotas()
+  }, [trabajoId])
+
+  const cargarNotas = async () => {
+    const { data } = await supabase
+      .from('notas')
+      .select('*')
+      .eq('trabajo_id', trabajoId)
+      .order('created_at', { ascending: true })
+    setNotas(data || [])
+    setLoadingNotas(false)
+  }
+
+  const agregarNota = async () => {
+    if (!nuevoTexto.trim() || !nuevoAutor.trim()) return
+    setGuardando(true)
+    const { data } = await supabase
+      .from('notas')
+      .insert([{ trabajo_id: trabajoId, texto: nuevoTexto.trim(), autor: nuevoAutor.trim() }])
+      .select()
+      .single()
+    if (data) {
+      setNotas(prev => [...prev, data])
+      setNuevoTexto('')
+    }
+    setGuardando(false)
+  }
+
+  const formatFecha = (ts) => {
+    const d = new Date(ts)
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' +
+           d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  return (
+    <div className="anim-fade-up stagger-3" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
+      <SectionLabel>Comentarios y notas</SectionLabel>
+
+      {loadingNotas ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {[1,2].map(i => <div key={i} style={{ height: '60px', borderRadius: '6px' }} className="skeleton" />)}
+        </div>
+      ) : notas.length === 0 ? (
+        <p style={{ fontSize: '13px', color: 'var(--text-light)', fontStyle: 'italic', marginBottom: '16px' }}>
+          Aún no hay comentarios en este trabajo.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+          {notas.map(nota => (
+            <div key={nota.id} style={{ background: 'var(--gold-light)', border: '1px solid var(--gold-border)', borderRadius: '6px', padding: '10px 14px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--navy-dark)', lineHeight: 1.6, marginBottom: '6px', whiteSpace: 'pre-wrap' }}>{nota.texto}</p>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '10px', fontWeight: '700', color: 'var(--gold)', letterSpacing: '0.06em' }}>{nota.autor}</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-light)' }}>·</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-light)' }}>{formatFecha(nota.created_at)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Formulario nuevo comentario */}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '4px' }}>Agregar comentario</p>
+
+        <select
+          value={nuevoAutor}
+          onChange={e => setNuevoAutor(e.target.value)}
+          className="field-input"
+          style={{ fontSize: '12px' }}
+        >
+          <option value="">¿Quién escribe?</option>
+          {empleados.map(e => <option key={e.id} value={e.nombre}>{e.nombre}</option>)}
+        </select>
+
+        <textarea
+          value={nuevoTexto}
+          onChange={e => setNuevoTexto(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) agregarNota() }}
+          placeholder="Escribe tu comentario..."
+          rows={3}
+          className="field-input"
+          style={{ resize: 'vertical', fontSize: '13px' }}
+        />
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', color: 'var(--text-light)', fontStyle: 'italic' }}>Ctrl+Enter para enviar</span>
+          <button
+            onClick={agregarNota}
+            disabled={guardando || !nuevoTexto.trim() || !nuevoAutor.trim()}
+            className="btn-gold"
+            style={{ padding: '8px 18px', fontSize: '12px' }}
+          >
+            {guardando ? 'Guardando...' : 'Agregar comentario'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -182,7 +334,6 @@ export default function DetalleTrabajo() {
   const [addingPaso, setAddingPaso] = useState(false)
   const [savingPaso, setSavingPaso] = useState(false)
 
-  // Drag state
   const dragId   = useRef(null)
   const [dragOverId,  setDragOverId]  = useState(null)
   const [draggingId,  setDraggingId]  = useState(null)
@@ -201,14 +352,12 @@ export default function DetalleTrabajo() {
     setLoading(false)
   }
 
-  /* ── Cambiar estado del paso ── */
   const cambiarEstado = async (itemId, estadoActual) => {
     const ciclo = { pendiente: 'hecho', hecho: 'no_aplica', no_aplica: 'pendiente' }
     const nuevoEstado = ciclo[estadoActual]
     await supabase.from('checklist').update({ estado: nuevoEstado }).eq('id', itemId)
     const todos = checklist.map(c => c.id === itemId ? { ...c, estado: nuevoEstado } : c)
     setChecklist(todos)
-    // Recalcular status del trabajo
     const aplicables  = todos.filter(c => c.estado !== 'no_aplica')
     const hechos      = aplicables.filter(c => c.estado === 'hecho')
     const nuevoStatus = aplicables.length > 0 && hechos.length === aplicables.length ? 'completado' : 'en_proceso'
@@ -216,40 +365,24 @@ export default function DetalleTrabajo() {
     setTrabajo(prev => ({ ...prev, status: nuevoStatus }))
   }
 
-  /* ── Drag & drop ── */
-  const handleDragStart = (itemId) => {
-    dragId.current = itemId
-    setDraggingId(itemId)
-  }
-  const handleDragOver = (itemId) => {
-    if (dragId.current !== itemId) setDragOverId(itemId)
-  }
+  const handleDragStart = (itemId) => { dragId.current = itemId; setDraggingId(itemId) }
+  const handleDragOver  = (itemId) => { if (dragId.current !== itemId) setDragOverId(itemId) }
   const handleDrop = async (targetId) => {
     const fromId = dragId.current
     if (!fromId || fromId === targetId) return
-
     const items  = [...checklist]
     const fromIdx = items.findIndex(c => c.id === fromId)
     const toIdx   = items.findIndex(c => c.id === targetId)
     const [moved] = items.splice(fromIdx, 1)
     items.splice(toIdx, 0, moved)
-
-    // Asignar nuevo orden
     const reordered = items.map((item, i) => ({ ...item, orden: i }))
     setChecklist(reordered)
-
-    // Guardar en Supabase (batch)
     await Promise.all(reordered.map(item =>
       supabase.from('checklist').update({ orden: item.orden }).eq('id', item.id)
     ))
   }
-  const handleDragEnd = () => {
-    dragId.current = null
-    setDraggingId(null)
-    setDragOverId(null)
-  }
+  const handleDragEnd = () => { dragId.current = null; setDraggingId(null); setDragOverId(null) }
 
-  /* ── Agregar paso extra ── */
   const agregarPaso = async () => {
     const paso = nuevoPaso.trim()
     if (!paso) return
@@ -340,17 +473,25 @@ export default function DetalleTrabajo() {
               <div><FL>Asunto</FL><FV>{trabajo.asunto}</FV></div>
               <div><FL>Fecha de ingreso</FL><FV>{trabajo.fecha_ingreso ? new Date(trabajo.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-MX') : null}</FV></div>
               <div><FL>Encargado</FL><FV>{trabajo.empleados?.nombre}</FV></div>
+              {trabajo.numero_escritura && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <FL>Escritura / Folio</FL>
+                  <FV>{trabajo.numero_escritura}</FV>
+                </div>
+              )}
             </div>
+
+            {trabajo.fecha_limite && (
+              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
+                <FL>Fecha de entrega prometida</FL>
+                <div style={{ marginTop: '4px' }}>{fechaLimiteBadge(trabajo.fecha_limite)}</div>
+              </div>
+            )}
+
             {trabajo.descripcion && (
               <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
                 <FL>Descripción</FL>
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6, marginTop: '2px' }}>{trabajo.descripcion}</p>
-              </div>
-            )}
-            {trabajo.notas && (
-              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
-                <FL>Notas</FL>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6, marginTop: '2px' }}>{trabajo.notas}</p>
               </div>
             )}
           </div>
@@ -359,7 +500,6 @@ export default function DetalleTrabajo() {
           <div className="anim-fade-up stagger-2" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1.25rem', boxShadow: 'var(--shadow-sm)' }}>
             <SectionLabel>Procedimiento</SectionLabel>
 
-            {/* Barra de progreso */}
             <div style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>{hechos} de {aplicables} pasos completados</span>
@@ -370,7 +510,6 @@ export default function DetalleTrabajo() {
               </div>
             </div>
 
-            {/* Items con drag & drop */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {checklist.map(item => (
                 <ChecklistItem
@@ -387,7 +526,6 @@ export default function DetalleTrabajo() {
               ))}
             </div>
 
-            {/* Agregar paso */}
             <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
               {addingPaso ? (
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -423,6 +561,10 @@ export default function DetalleTrabajo() {
               Toca el ícono o el nombre para cambiar estado · Arrastra ⠿ para reordenar
             </p>
           </div>
+
+          {/* Historial de notas/comentarios */}
+          <SeccionNotas trabajoId={id} empleados={empleados} />
+
         </div>
       </div>
 

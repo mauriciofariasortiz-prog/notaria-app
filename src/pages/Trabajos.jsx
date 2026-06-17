@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate } from 'react-router-dom'
 
@@ -76,10 +76,43 @@ function SectionTitle({ children }) {
   )
 }
 
+function ResultadoBusqueda({ trabajo, empNombre, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px 16px', cursor: 'pointer', transition: 'box-shadow 0.15s, border-color 0.15s', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(30,58,95,0.1)'; e.currentTarget.style.borderColor = '#C5A96A' }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = '#e5e7eb' }}
+    >
+      <div>
+        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '16px', fontWeight: '500', color: '#142845', marginBottom: '3px' }}>
+          {[trabajo.asunto, trabajo.cliente].filter(Boolean).join(' · ')}
+        </p>
+        {trabajo.numero_escritura && (
+          <p style={{ fontSize: '11px', color: '#C5A96A', fontWeight: '600', marginBottom: '2px' }}>Folio: {trabajo.numero_escritura}</p>
+        )}
+        <p style={{ fontSize: '11px', color: '#8A9BAD' }}>
+          {empNombre} · Ingreso: {trabajo.fecha_ingreso ? new Date(trabajo.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-MX') : '—'}
+        </p>
+      </div>
+      <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', flexShrink: 0, marginTop: '2px',
+        ...(trabajo.status === 'completado'
+          ? { background: 'rgba(45,122,79,0.09)', color: '#2d7a4f', border: '1px solid rgba(45,122,79,0.22)' }
+          : { background: 'rgba(197,169,106,0.13)', color: '#B07D2A', border: '1px solid rgba(197,169,106,0.38)' })
+      }}>
+        {trabajo.status === 'completado' ? 'Completado' : 'En proceso'}
+      </span>
+    </div>
+  )
+}
+
 export default function Trabajos() {
   const [empleados, setEmpleados] = useState([])
   const [userName,  setUserName]  = useState('')
   const [loading,   setLoading]   = useState(true)
+  const [busqueda,  setBusqueda]  = useState('')
+  const [todosJobs, setTodosJobs] = useState([])
+  const [empMap,    setEmpMap]    = useState({})
   const navigate = useNavigate()
 
   useEffect(() => { cargar() }, [])
@@ -88,7 +121,7 @@ export default function Trabajos() {
     const [{ data: { user } }, { data: emps }, { data: allJobs }] = await Promise.all([
       supabase.auth.getUser(),
       supabase.from('empleados').select('id, nombre').order('nombre'),
-      supabase.from('trabajos').select('encargado_id'),
+      supabase.from('trabajos').select('id, encargado_id, cliente, asunto, fecha_ingreso, numero_escritura, status'),
     ])
 
     if (user) {
@@ -97,16 +130,19 @@ export default function Trabajos() {
     }
 
     const counts = {}
+    const map = {}
+    ;(emps || []).forEach(e => { map[e.id] = e.nombre })
     ;(allJobs || []).forEach(j => {
       if (j.encargado_id) counts[j.encargado_id] = (counts[j.encargado_id] || 0) + 1
     })
 
     const lista = (emps || []).map(e => ({ ...e, total: counts[e.id] || 0 }))
-    // Mauricio FV siempre primero
     const idx = lista.findIndex(e => e.nombre === 'Mauricio FV')
     if (idx > 0) { const [mfv] = lista.splice(idx, 1); lista.unshift(mfv) }
 
     setEmpleados(lista)
+    setTodosJobs(allJobs || [])
+    setEmpMap(map)
     setLoading(false)
   }
 
@@ -114,6 +150,17 @@ export default function Trabajos() {
     await supabase.auth.signOut()
     navigate('/login')
   }
+
+  // Búsqueda global
+  const resultados = useMemo(() => {
+    if (!busqueda.trim()) return []
+    const q = busqueda.toLowerCase()
+    return todosJobs.filter(j =>
+      j.cliente?.toLowerCase().includes(q) ||
+      j.asunto?.toLowerCase().includes(q) ||
+      j.numero_escritura?.toLowerCase().includes(q)
+    )
+  }, [busqueda, todosJobs])
 
   const [principal, ...resto] = empleados
 
@@ -154,35 +201,73 @@ export default function Trabajos() {
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '46px', fontWeight: '600', color: '#ffffff', margin: '0 0 10px', lineHeight: 1.1 }}>
           Notaría Pública No. 120
         </h1>
-        <p style={{ fontSize: '13px', color: '#8A9BAD', letterSpacing: '0.06em', margin: 0 }}>Nuevo León · Monterrey</p>
+        <p style={{ fontSize: '13px', color: '#8A9BAD', letterSpacing: '0.06em', margin: '0 0 28px' }}>Nuevo León · Monterrey</p>
+
+        {/* Barra de búsqueda global */}
+        <div style={{ maxWidth: '520px', margin: '0 auto', position: 'relative' }}>
+          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: 'rgba(197,169,106,0.7)', pointerEvents: 'none' }}>🔍</span>
+          <input
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            placeholder="Buscar en todos los trabajos — cliente, asunto o folio..."
+            style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(197,169,106,0.35)', borderRadius: '8px', padding: '12px 16px 12px 40px', fontSize: '13px', color: '#fff', outline: 'none', fontFamily: 'inherit', backdropFilter: 'blur(4px)' }}
+          />
+        </div>
       </div>
 
-      {/* ABOGADOS */}
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 24px 56px' }}>
-        <SectionTitle>Abogados</SectionTitle>
 
-        {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', height: '200px' }}>
-            {[1,2].map(i => <div key={i} style={{ borderRadius: '14px', background: 'linear-gradient(90deg,#e8eaed 25%,#f4f5f7 50%,#e8eaed 75%)', backgroundSize: '400px 100%', animation: 'shimmer 1.4s ease infinite' }} />)}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'stretch' }}>
-            {/* Tarjeta grande — Mauricio FV */}
-            {principal && (
-              <div style={{ flex: '0 0 220px' }} className="anim-fade-up">
-                <AbogadoCard emp={principal} big onClick={() => navigate(`/empleados/${principal.id}`)} />
+        {/* Resultados de búsqueda global */}
+        {busqueda.trim() ? (
+          <>
+            <SectionTitle>
+              {resultados.length === 0
+                ? 'Sin resultados'
+                : `${resultados.length} resultado${resultados.length !== 1 ? 's' : ''} para "${busqueda}"`}
+            </SectionTitle>
+            {resultados.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#8A9BAD', fontSize: '13px' }}>
+                No se encontró ningún trabajo con ese término.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {resultados.map(j => (
+                  <ResultadoBusqueda
+                    key={j.id}
+                    trabajo={j}
+                    empNombre={empMap[j.encargado_id] || 'Sin asignar'}
+                    onClick={() => navigate(`/trabajos/${j.id}`)}
+                  />
+                ))}
               </div>
             )}
+          </>
+        ) : (
+          <>
+            <SectionTitle>Abogados</SectionTitle>
 
-            {/* Resto — grid 2×2 */}
-            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '14px' }}>
-              {resto.map((emp, i) => (
-                <div key={emp.id} className={`anim-fade-up stagger-${i + 1}`}>
-                  <AbogadoCard emp={emp} onClick={() => navigate(`/empleados/${emp.id}`)} />
+            {loading ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', height: '200px' }}>
+                {[1,2].map(i => <div key={i} style={{ borderRadius: '14px', background: 'linear-gradient(90deg,#e8eaed 25%,#f4f5f7 50%,#e8eaed 75%)', backgroundSize: '400px 100%', animation: 'shimmer 1.4s ease infinite' }} />)}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '14px', alignItems: 'stretch' }}>
+                {principal && (
+                  <div style={{ flex: '0 0 220px' }} className="anim-fade-up">
+                    <AbogadoCard emp={principal} big onClick={() => navigate(`/empleados/${principal.id}`)} />
+                  </div>
+                )}
+
+                <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '14px' }}>
+                  {resto.map((emp, i) => (
+                    <div key={emp.id} className={`anim-fade-up stagger-${i + 1}`}>
+                      <AbogadoCard emp={emp} onClick={() => navigate(`/empleados/${emp.id}`)} />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
