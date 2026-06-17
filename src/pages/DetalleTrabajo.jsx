@@ -43,41 +43,17 @@ function fechaLimiteBadge(fecha_limite) {
   return <span style={{ display: 'inline-block', fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '99px', background: bg, color, border: `1px solid ${border}` }}>{texto}</span>
 }
 
-/* ── Modal: captura fecha de firma ── */
-function FirmaModal({ onConfirm, onSkip }) {
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,40,69,0.6)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', animation: 'fadeIn 0.2s ease' }}>
-      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '380px', boxShadow: '0 24px 80px rgba(20,40,69,0.3)', animation: 'fadeUp 0.25s cubic-bezier(0.22,1,0.36,1)', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--navy-dark)', padding: '1rem 1.4rem', borderBottom: '2px solid var(--gold)' }}>
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: '500', color: '#fff' }}>Fecha de firma</p>
-          <p style={{ fontSize: '11px', color: 'rgba(197,169,106,0.8)', marginTop: '2px' }}>¿Cuándo se realizó o realizará la firma?</p>
-        </div>
-        <div style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Fecha</label>
-            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="field-input" autoFocus />
-          </div>
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-            <button onClick={onSkip} className="btn-ghost-dark" style={{ padding: '9px 16px', fontSize: '11px' }}>Omitir fecha</button>
-            <button onClick={() => onConfirm(fecha)} className="btn-gold" style={{ padding: '9px 20px' }}>Guardar fecha</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 /* ── Modal edición ── */
 function EditModal({ trabajo, empleados, onClose, onSave }) {
   const [form, setForm] = useState({
-    cliente:          trabajo.cliente          || '',
-    asunto:           trabajo.asunto           || '',
-    fecha_ingreso:    trabajo.fecha_ingreso    || '',
-    descripcion:      trabajo.descripcion      || '',
-    encargado_id:     trabajo.encargado_id     || '',
-    numero_escritura: trabajo.numero_escritura || '',
-    fecha_limite:     trabajo.fecha_limite     || '',
+    cliente:            trabajo.cliente            || '',
+    asunto:             trabajo.asunto             || '',
+    fecha_ingreso:      trabajo.fecha_ingreso      || '',
+    descripcion:        trabajo.descripcion        || '',
+    encargado_id:       trabajo.encargado_id       || '',
+    numero_escritura:   trabajo.numero_escritura   || '',
+    numero_instrumento: trabajo.numero_instrumento || '',
+    fecha_limite:       trabajo.fecha_limite       || '',
   })
   const [saving, setSaving] = useState(false)
   const lbl = { fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }
@@ -88,11 +64,14 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
     if (!form.cliente.trim()) return
     setSaving(true)
     const { error } = await supabase.from('trabajos').update({
-      cliente: form.cliente, asunto: form.asunto,
-      fecha_ingreso: form.fecha_ingreso, descripcion: form.descripcion,
-      encargado_id: form.encargado_id || null,
-      numero_escritura: form.numero_escritura || null,
-      fecha_limite: form.fecha_limite || null,
+      cliente:            form.cliente,
+      asunto:             form.asunto,
+      fecha_ingreso:      form.fecha_ingreso,
+      descripcion:        form.descripcion,
+      encargado_id:       form.encargado_id       || null,
+      numero_escritura:   form.numero_escritura   || null,
+      numero_instrumento: form.numero_instrumento || null,
+      fecha_limite:       form.fecha_limite       || null,
     }).eq('id', trabajo.id)
     if (!error) onSave(form)
     setSaving(false)
@@ -118,9 +97,15 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
               {ASUNTOS.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={lbl}>Número de escritura / Folio</label>
-            <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345 o Folio Real 678" className="field-input" />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={lbl}>Número de escritura / Folio</label>
+              <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345" className="field-input" />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={lbl}>Número de instrumento</label>
+              <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
+            </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -184,17 +169,10 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
       >{cfg.icon}</div>
-      <div style={{ flex: 1 }}>
-        <span
-          onClick={e => { e.stopPropagation(); onEstado(item.id, item.estado) }}
-          style={{ fontSize: '13px', color: item.estado === 'no_aplica' ? 'var(--text-light)' : 'var(--navy-dark)', textDecoration: item.estado === 'no_aplica' ? 'line-through' : 'none', fontWeight: item.estado === 'hecho' ? '500' : '400', cursor: 'pointer' }}
-        >{item.paso}</span>
-        {item.paso === 'Firma' && item.fecha_firma && (
-          <p style={{ fontSize: '10px', color: 'var(--gold)', fontWeight: '600', marginTop: '2px' }}>
-            📅 {new Date(item.fecha_firma + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-        )}
-      </div>
+      <span
+        onClick={e => { e.stopPropagation(); onEstado(item.id, item.estado) }}
+        style={{ fontSize: '13px', flex: 1, color: item.estado === 'no_aplica' ? 'var(--text-light)' : 'var(--navy-dark)', textDecoration: item.estado === 'no_aplica' ? 'line-through' : 'none', fontWeight: item.estado === 'hecho' ? '500' : '400', cursor: 'pointer' }}
+      >{item.paso}</span>
       <span style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: cfg.color, marginLeft: '10px', flexShrink: 0 }}>{cfg.label}</span>
     </div>
   )
@@ -340,7 +318,6 @@ export default function DetalleTrabajo() {
   const [nuevoPaso,      setNuevoPaso]      = useState('')
   const [addingPaso,     setAddingPaso]     = useState(false)
   const [savingPaso,     setSavingPaso]     = useState(false)
-  const [firmaModal,     setFirmaModal]     = useState(null) // { itemId, nuevoEstado }
   const [currentUser,    setCurrentUser]    = useState('')
   const [esMauricio,     setEsMauricio]     = useState(false)
   const [bitacoraKey,    setBitacoraKey]    = useState(0) // para re-render bitácora
@@ -380,39 +357,24 @@ export default function DetalleTrabajo() {
     setBitacoraKey(k => k + 1)
   }
 
-  /* ── Aplicar cambio de estado (después de resolver firma modal) ── */
-  const aplicarCambioEstado = async (itemId, nuevoEstado, fechaFirma = null) => {
-    const item = checklist.find(c => c.id === itemId)
-    const updateData = { estado: nuevoEstado }
-    if (fechaFirma) updateData.fecha_firma = fechaFirma
-
-    await supabase.from('checklist').update(updateData).eq('id', itemId)
-
-    const todos = checklist.map(c => c.id === itemId ? { ...c, estado: nuevoEstado, ...(fechaFirma ? { fecha_firma: fechaFirma } : {}) } : c)
-    setChecklist(todos)
-
-    const aplicables = todos.filter(c => c.estado !== 'no_aplica')
-    const hechos     = aplicables.filter(c => c.estado === 'hecho')
-    const nuevoStatus = aplicables.length > 0 && hechos.length === aplicables.length ? 'completado' : 'en_proceso'
-    await supabase.from('trabajos').update({ status: nuevoStatus }).eq('id', id)
-    setTrabajo(prev => ({ ...prev, status: nuevoStatus }))
-
-    const etiqueta = { hecho: 'Hecho', no_aplica: 'No aplica', pendiente: 'Pendiente' }[nuevoEstado] || nuevoEstado
-    const accion = `Cambió paso "${item?.paso}" a ${etiqueta}${fechaFirma ? ` · Fecha de firma: ${new Date(fechaFirma + 'T00:00:00').toLocaleDateString('es-MX')}` : ''}`
-    await logAccion(accion)
-  }
-
-  /* ── Cambiar estado (con detección de Firma) ── */
+  /* ── Cambiar estado del paso ── */
   const cambiarEstado = async (itemId, estadoActual) => {
     const ciclo = { pendiente: 'hecho', hecho: 'no_aplica', no_aplica: 'pendiente' }
     const nuevoEstado = ciclo[estadoActual]
     const item = checklist.find(c => c.id === itemId)
 
-    if (item?.paso === 'Firma' && nuevoEstado === 'hecho') {
-      setFirmaModal({ itemId, nuevoEstado })
-      return
-    }
-    await aplicarCambioEstado(itemId, nuevoEstado)
+    await supabase.from('checklist').update({ estado: nuevoEstado }).eq('id', itemId)
+    const todos = checklist.map(c => c.id === itemId ? { ...c, estado: nuevoEstado } : c)
+    setChecklist(todos)
+
+    const aplicables  = todos.filter(c => c.estado !== 'no_aplica')
+    const hechos      = aplicables.filter(c => c.estado === 'hecho')
+    const nuevoStatus = aplicables.length > 0 && hechos.length === aplicables.length ? 'completado' : 'en_proceso'
+    await supabase.from('trabajos').update({ status: nuevoStatus }).eq('id', id)
+    setTrabajo(prev => ({ ...prev, status: nuevoStatus }))
+
+    const etiqueta = { hecho: 'Hecho', no_aplica: 'No aplica', pendiente: 'Pendiente' }[nuevoEstado] || nuevoEstado
+    await logAccion(`Cambió paso "${item?.paso}" a ${etiqueta}`)
   }
 
   /* ── Drag & Drop ── */
@@ -539,7 +501,10 @@ export default function DetalleTrabajo() {
               <div><FL>Fecha de ingreso</FL><FV>{trabajo.fecha_ingreso ? new Date(trabajo.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-MX') : null}</FV></div>
               <div><FL>Encargado</FL><FV>{trabajo.empleados?.nombre}</FV></div>
               {trabajo.numero_escritura && (
-                <div style={{ gridColumn: '1 / -1' }}><FL>Escritura / Folio</FL><FV>{trabajo.numero_escritura}</FV></div>
+                <div><FL>Escritura / Folio</FL><FV>{trabajo.numero_escritura}</FV></div>
+              )}
+              {trabajo.numero_instrumento && (
+                <div><FL>Número de instrumento</FL><FV>{trabajo.numero_instrumento}</FV></div>
               )}
             </div>
             {trabajo.fecha_limite && (
@@ -627,19 +592,6 @@ export default function DetalleTrabajo() {
         <EditModal trabajo={trabajo} empleados={empleados} onClose={() => setEditOpen(false)} onSave={handleSave} />
       )}
 
-      {/* Modal fecha de firma */}
-      {firmaModal && (
-        <FirmaModal
-          onConfirm={async (fecha) => {
-            setFirmaModal(null)
-            await aplicarCambioEstado(firmaModal.itemId, firmaModal.nuevoEstado, fecha)
-          }}
-          onSkip={async () => {
-            setFirmaModal(null)
-            await aplicarCambioEstado(firmaModal.itemId, firmaModal.nuevoEstado, null)
-          }}
-        />
-      )}
     </>
   )
 }

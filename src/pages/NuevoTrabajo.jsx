@@ -28,7 +28,7 @@ export default function NuevoTrabajo() {
   const [empleados, setEmpleados] = useState([])
   const [form, setForm] = useState({
     cliente: '', asunto: '', fecha_ingreso: new Date().toISOString().split('T')[0],
-    descripcion: '', encargado_id: '', numero_escritura: '', fecha_limite: '',
+    descripcion: '', encargado_id: '', numero_escritura: '', numero_instrumento: '', fecha_limite: '',
   })
   const [errors,  setErrors]  = useState({})
   const [touched, setTouched] = useState({})
@@ -77,8 +77,9 @@ export default function NuevoTrabajo() {
       fecha_ingreso:    form.fecha_ingreso,
       descripcion:      form.descripcion,
       encargado_id:     form.encargado_id || null,
-      numero_escritura: form.numero_escritura || null,
-      fecha_limite:     form.fecha_limite || null,
+      numero_escritura:  form.numero_escritura  || null,
+      numero_instrumento: form.numero_instrumento || null,
+      fecha_limite:      form.fecha_limite      || null,
       status:           'en_proceso',
     }]).select().single()
 
@@ -150,9 +151,14 @@ export default function NuevoTrabajo() {
               </div>
             )}
 
-            <Field label="Número de escritura / Folio">
-              <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345 o Folio Real 678" className="field-input" />
-            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <Field label="Número de escritura / Folio">
+                <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345" className="field-input" />
+              </Field>
+              <Field label="Número de instrumento">
+                <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
+              </Field>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               <Field label="Fecha de ingreso">
