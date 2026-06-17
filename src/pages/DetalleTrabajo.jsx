@@ -446,6 +446,22 @@ export default function DetalleTrabajo() {
     setNuevoPaso(''); setAddingPaso(false); setSavingPaso(false)
   }
 
+  /* ── Eliminar trabajo ── */
+  const eliminarTrabajo = async () => {
+    const confirmado = window.confirm(
+      '¿Estás seguro que deseas eliminar este trabajo? Esta acción no se puede deshacer.'
+    )
+    if (!confirmado) return
+
+    // El checklist, notas y bitácora se eliminan en cascada por las FK
+    await supabase.from('trabajos').delete().eq('id', id)
+
+    // Regresar a la lista del abogado encargado (o a trabajos si no hay)
+    const encargadoId = trabajo?.encargado_id
+    if (encargadoId) navigate(`/empleados/${encargadoId}`)
+    else navigate('/trabajos')
+  }
+
   /* ── Guardar edición ── */
   const handleSave = async (formData) => {
     const enc = empleados.find(e => e.id === formData.encargado_id)
@@ -590,6 +606,18 @@ export default function DetalleTrabajo() {
 
           {/* Bitácora — solo Mauricio FV */}
           {esMauricio && <SeccionBitacora key={bitacoraKey} trabajoId={id} />}
+
+          {/* Eliminar trabajo */}
+          <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border)', marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              onClick={eliminarTrabajo}
+              style={{ background: 'transparent', border: '1px solid rgba(192,57,43,0.3)', borderRadius: '4px', color: 'rgba(192,57,43,0.65)', fontSize: '11px', fontWeight: '600', letterSpacing: '0.06em', padding: '7px 16px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s, background 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(192,57,43,0.7)'; e.currentTarget.style.color = '#c0392b'; e.currentTarget.style.background = 'rgba(192,57,43,0.05)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(192,57,43,0.3)'; e.currentTarget.style.color = 'rgba(192,57,43,0.65)'; e.currentTarget.style.background = 'transparent' }}
+            >
+              Eliminar trabajo
+            </button>
+          </div>
 
         </div>
       </div>
