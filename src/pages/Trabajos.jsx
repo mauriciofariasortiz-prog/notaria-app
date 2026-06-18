@@ -220,8 +220,8 @@ export default function Trabajos() {
     const idx = lista.findIndex(e => e.nombre === 'Mauricio FV')
     if (idx > 0) { const [mfv] = lista.splice(idx, 1); lista.unshift(mfv) }
 
-    // Trabajos en proceso sin movimiento en 7+ días
-    const hace7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    // Trabajos en proceso sin movimiento en 3+ días
+    const hace7 = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
     const stale = (allJobs || [])
       .filter(j => j.status !== 'completado' && j.ultima_actividad && new Date(j.ultima_actividad) < hace7)
       .map(j => ({ ...j, emp_nombre: map[j.encargado_id] || null }))

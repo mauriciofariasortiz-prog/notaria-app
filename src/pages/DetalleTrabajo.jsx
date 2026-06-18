@@ -43,37 +43,55 @@ function fechaLimiteBadge(fecha_limite) {
   return <span style={{ display: 'inline-block', fontSize: '11px', fontWeight: '600', padding: '3px 10px', borderRadius: '99px', background: bg, color, border: `1px solid ${border}` }}>{texto}</span>
 }
 
+/* ── Parsear "EP 4521" / "AFP 123" → { tipo, numero } ── */
+function parseEscritura(val) {
+  if (!val) return { tipo: 'EP', numero: '' }
+  if (val.startsWith('AFP ')) return { tipo: 'AFP', numero: val.slice(4) }
+  if (val.startsWith('EP '))  return { tipo: 'EP',  numero: val.slice(3) }
+  return { tipo: 'EP', numero: val }
+}
+
 /* ── Modal edición ── */
 function EditModal({ trabajo, empleados, onClose, onSave }) {
+  const escrituraInit = parseEscritura(trabajo.numero_escritura)
+  const asuntoEnLista = ASUNTOS.includes(trabajo.asunto)
+
   const [form, setForm] = useState({
     cliente:            trabajo.cliente            || '',
-    asunto:             trabajo.asunto             || '',
+    asunto:             asuntoEnLista ? (trabajo.asunto || '') : 'Otro',
     fecha_ingreso:      trabajo.fecha_ingreso      || '',
     descripcion:        trabajo.descripcion        || '',
     encargado_id:       trabajo.encargado_id       || '',
-    numero_escritura:   trabajo.numero_escritura   || '',
     numero_instrumento: trabajo.numero_instrumento || '',
-    fecha_limite:       trabajo.fecha_limite       || '',
   })
+  const [tipoEscritura,       setTipoEscritura]       = useState(escrituraInit.tipo)
+  const [numeroEscritura,     setNumeroEscritura]     = useState(escrituraInit.numero)
+  const [asuntoPersonalizado, setAsuntoPersonalizado] = useState(asuntoEnLista ? '' : (trabajo.asunto || ''))
   const [saving, setSaving] = useState(false)
+
   const lbl = { fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  const selectStyle = { padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--silver-border)', fontSize: '13px', color: 'var(--text)', background: '#FAFBFC', fontFamily: 'inherit', cursor: 'pointer' }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.cliente.trim()) return
+    if (form.asunto === 'Otro' && !asuntoPersonalizado.trim()) return
     setSaving(true)
+
+    const asuntoFinal    = form.asunto === 'Otro' ? asuntoPersonalizado.trim() : form.asunto
+    const escrituraFinal = numeroEscritura.trim() ? `${tipoEscritura} ${numeroEscritura.trim()}` : null
+
     const { error } = await supabase.from('trabajos').update({
       cliente:            form.cliente,
-      asunto:             form.asunto,
+      asunto:             asuntoFinal,
       fecha_ingreso:      form.fecha_ingreso,
       descripcion:        form.descripcion,
       encargado_id:       form.encargado_id       || null,
-      numero_escritura:   form.numero_escritura   || null,
+      numero_escritura:   escrituraFinal,
       numero_instrumento: form.numero_instrumento || null,
-      fecha_limite:       form.fecha_limite       || null,
     }).eq('id', trabajo.id)
-    if (!error) onSave(form)
+    if (!error) onSave({ ...form, asunto: asuntoFinal, numero_escritura: escrituraFinal })
     setSaving(false)
   }
 
@@ -86,10 +104,12 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '13px' }}>
           <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold)' }}>Identificación</p>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Cliente <span style={{ color: 'var(--gold)' }}>*</span></label>
             <input name="cliente" value={form.cliente} onChange={handleChange} required className="field-input" />
           </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Asunto</label>
             <select name="asunto" value={form.asunto} onChange={handleChange} className="field-input">
@@ -97,30 +117,39 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
               {ASUNTOS.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          {form.asunto === 'Otro' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={lbl}>Número de escritura / Folio</label>
-              <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345" className="field-input" />
+              <label style={lbl}>Especifica el asunto <span style={{ color: 'var(--gold)' }}>*</span></label>
+              <input value={asuntoPersonalizado} onChange={e => setAsuntoPersonalizado(e.target.value)} placeholder="Describe el asunto específico..." className="field-input" autoFocus />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={lbl}>Número de instrumento</label>
-              <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
-            </div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={lbl}>Fecha de ingreso</label>
-              <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={lbl}>Fecha de entrega prometida</label>
-              <input name="fecha_limite" value={form.fecha_limite} onChange={handleChange} type="date" className="field-input" />
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={lbl}>Tipo de instrumento / Número</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <select value={tipoEscritura} onChange={e => setTipoEscritura(e.target.value)} style={{ ...selectStyle, width: '90px', flexShrink: 0 }}>
+                <option value="EP">EP</option>
+                <option value="AFP">AFP</option>
+              </select>
+              <input value={numeroEscritura} onChange={e => setNumeroEscritura(e.target.value)} placeholder="Número (ej. 4,521)" className="field-input" style={{ flex: 1 }} />
             </div>
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={lbl}>Número de instrumento</label>
+            <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <label style={lbl}>Fecha de ingreso</label>
+            <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Descripción</label>
             <textarea name="descripcion" value={form.descripcion} onChange={handleChange} rows={2} className="field-input" style={{ resize: 'vertical' }} />
           </div>
+
           <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--gold)', marginTop: '4px' }}>Asignación</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Encargado</label>
@@ -129,6 +158,7 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
               {empleados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
             </select>
           </div>
+
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
             <button type="button" onClick={onClose} className="btn-ghost-dark">Cancelar</button>
             <button type="submit" disabled={saving} className="btn-gold" style={{ padding: '10px 22px' }}>

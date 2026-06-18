@@ -28,8 +28,11 @@ export default function NuevoTrabajo() {
   const [empleados, setEmpleados] = useState([])
   const [form, setForm] = useState({
     cliente: '', asunto: '', fecha_ingreso: new Date().toISOString().split('T')[0],
-    descripcion: '', encargado_id: '', numero_escritura: '', numero_instrumento: '', fecha_limite: '',
+    descripcion: '', encargado_id: '', numero_instrumento: '',
   })
+  const [tipoEscritura,      setTipoEscritura]      = useState('EP')
+  const [numeroEscritura,    setNumeroEscritura]    = useState('')
+  const [asuntoPersonalizado, setAsuntoPersonalizado] = useState('')
   const [errors,  setErrors]  = useState({})
   const [touched, setTouched] = useState({})
   const [loading, setLoading] = useState(false)
@@ -48,6 +51,7 @@ export default function NuevoTrabajo() {
     const e = {}
     if (!f.cliente.trim()) e.cliente = 'El nombre del cliente es requerido'
     if (!f.asunto) e.asunto = 'Selecciona un asunto'
+    if (f.asunto === 'Otro' && !asuntoPersonalizado.trim()) e.asuntoPersonalizado = 'Escribe el asunto específico'
     return e
   }
 
@@ -71,20 +75,23 @@ export default function NuevoTrabajo() {
     if (Object.keys(errs).length > 0) return
     setLoading(true)
 
+    const asuntoFinal    = form.asunto === 'Otro' ? asuntoPersonalizado.trim() : form.asunto
+    const escrituraFinal = numeroEscritura.trim() ? `${tipoEscritura} ${numeroEscritura.trim()}` : null
+
     const { data: nuevo, error } = await supabase.from('trabajos').insert([{
-      cliente:          form.cliente,
-      asunto:           form.asunto,
-      fecha_ingreso:    form.fecha_ingreso,
-      descripcion:      form.descripcion,
-      encargado_id:     form.encargado_id || null,
-      numero_escritura:  form.numero_escritura  || null,
+      cliente:            form.cliente,
+      asunto:             asuntoFinal,
+      fecha_ingreso:      form.fecha_ingreso,
+      descripcion:        form.descripcion,
+      encargado_id:       form.encargado_id || null,
+      numero_escritura:   escrituraFinal,
       numero_instrumento: form.numero_instrumento || null,
-      fecha_limite:      form.fecha_limite      || null,
-      status:           'en_proceso',
+      status:             'en_proceso',
     }]).select().single()
 
     if (!error && nuevo) {
-      const pasos = PASOS_POR_ASUNTO[form.asunto] || []
+      const pasosKey = form.asunto === 'Otro' ? 'Otro' : form.asunto
+      const pasos = PASOS_POR_ASUNTO[pasosKey] || []
       if (pasos.length > 0) {
         await supabase.from('checklist').insert(
           pasos.map(paso => ({ trabajo_id: nuevo.id, paso, estado: 'pendiente' }))
@@ -100,7 +107,7 @@ export default function NuevoTrabajo() {
   const goBack = () => empleadoParam ? navigate(`/empleados/${empleadoParam}`) : navigate('/trabajos')
   const inputClass = (name) => `field-input${errors[name] ? ' error' : ''}`
 
-  const pasosPreview = form.asunto ? PASOS_POR_ASUNTO[form.asunto] || [] : []
+  const selectStyle = { padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--silver-border)', fontSize: '13px', color: 'var(--text)', background: '#FAFBFC', fontFamily: 'inherit', cursor: 'pointer' }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -124,50 +131,58 @@ export default function NuevoTrabajo() {
           {/* Identificación */}
           <SectionDivider>Identificación</SectionDivider>
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '14px', boxShadow: 'var(--shadow-sm)' }}>
+
             <Field label="Cliente" required error={errors.cliente}>
               <input name="cliente" value={form.cliente} onChange={handleChange} onBlur={handleBlur} placeholder="Nombre completo del cliente o empresa" className={inputClass('cliente')} />
             </Field>
 
+            {/* Asunto + campo "Otro" */}
             <Field label="Asunto" required error={errors.asunto}>
               <select name="asunto" value={form.asunto} onChange={handleChange} onBlur={handleBlur} className={inputClass('asunto')}>
                 <option value="">Selecciona el tipo de asunto...</option>
                 {ASUNTOS.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </Field>
-
-            {/* Preview de pasos */}
-            {pasosPreview.length > 0 && (
-              <div style={{ background: 'var(--gold-light)', border: '1px solid var(--gold-border)', borderRadius: '4px', padding: '10px 14px' }}>
-                <p style={{ fontSize: '10px', fontWeight: '700', color: 'var(--gold-dim)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '7px' }}>
-                  Checklist que se generará ({pasosPreview.length} pasos)
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                  {pasosPreview.map((paso, i) => (
-                    <span key={i} style={{ fontSize: '11px', background: 'white', border: '1px solid var(--gold-border)', borderRadius: '99px', padding: '2px 10px', color: 'var(--navy-dark)', fontWeight: '500' }}>
-                      {paso}
-                    </span>
-                  ))}
-                </div>
-              </div>
+            {form.asunto === 'Otro' && (
+              <Field label="Especifica el asunto" required error={errors.asuntoPersonalizado}>
+                <input
+                  value={asuntoPersonalizado}
+                  onChange={e => { setAsuntoPersonalizado(e.target.value); if (errors.asuntoPersonalizado) setErrors(v => ({ ...v, asuntoPersonalizado: '' })) }}
+                  placeholder="Describe el asunto específico..."
+                  className={`field-input${errors.asuntoPersonalizado ? ' error' : ''}`}
+                  autoFocus
+                />
+              </Field>
             )}
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-              <Field label="Número de escritura / Folio">
-                <input name="numero_escritura" value={form.numero_escritura} onChange={handleChange} placeholder="Ej. 12,345" className="field-input" />
-              </Field>
-              <Field label="Número de instrumento">
-                <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
-              </Field>
-            </div>
+            {/* Tipo de instrumento (EP / AFP) + número */}
+            <Field label="Tipo de instrumento / Número">
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  value={tipoEscritura}
+                  onChange={e => setTipoEscritura(e.target.value)}
+                  style={{ ...selectStyle, width: '90px', flexShrink: 0 }}
+                >
+                  <option value="EP">EP</option>
+                  <option value="AFP">AFP</option>
+                </select>
+                <input
+                  value={numeroEscritura}
+                  onChange={e => setNumeroEscritura(e.target.value)}
+                  placeholder="Número (ej. 4,521)"
+                  className="field-input"
+                  style={{ flex: 1 }}
+                />
+              </div>
+            </Field>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-              <Field label="Fecha de ingreso">
-                <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
-              </Field>
-              <Field label="Fecha de entrega prometida">
-                <input name="fecha_limite" value={form.fecha_limite} onChange={handleChange} type="date" className="field-input" />
-              </Field>
-            </div>
+            <Field label="Número de instrumento">
+              <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
+            </Field>
+
+            <Field label="Fecha de ingreso">
+              <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
+            </Field>
 
             <Field label="Descripción">
               <textarea name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Detalles adicionales del asunto..." rows={3} className="field-input" style={{ resize: 'vertical' }} />
