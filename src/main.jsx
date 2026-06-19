@@ -7,6 +7,7 @@ import EmpleadoTrabajos from './pages/EmpleadoTrabajos.jsx'
 import NuevoTrabajo from './pages/NuevoTrabajo.jsx'
 import DetalleTrabajo from './pages/DetalleTrabajo.jsx'
 import Calendario from './pages/Calendario.jsx'
+import AdminTareas from './pages/AdminTareas.jsx'
 import App from './App.jsx'
 import './index.css'
 
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/trabajos/:id" element={<DetalleTrabajo />} />
         <Route path="/empleados/:id" element={<EmpleadoTrabajos />} />
         <Route path="/calendario" element={<Calendario />} />
+        <Route path="/admin/gabriela" element={<AdminTareas />} />
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

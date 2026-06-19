@@ -65,6 +65,47 @@ function AbogadoCard({ emp, onClick, big = false }) {
   )
 }
 
+function AdminCard({ onClick }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: '#ffffff',
+        border: `1px solid ${hovered ? '#1E3A5F' : '#e5e7eb'}`,
+        borderTop: `3px solid ${hovered ? '#C5A96A' : 'transparent'}`,
+        borderRadius: '14px',
+        padding: '22px 14px 20px',
+        cursor: 'pointer',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        gap: '11px',
+        textAlign: 'center',
+        width: '100%',
+        transition: 'border-color 0.18s, box-shadow 0.18s, transform 0.18s',
+        boxShadow: hovered ? '0 6px 24px rgba(30,58,95,0.13)' : '0 1px 4px rgba(0,0,0,0.06)',
+        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+      }}
+    >
+      <div style={{
+        width: 56, height: 56, borderRadius: '50%',
+        background: '#3a5a2a',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: "'Cormorant Garamond', serif",
+        fontSize: 20, fontWeight: '600', color: '#C5A96A',
+        boxShadow: '0 2px 10px rgba(20,40,69,0.2)',
+      }}>GM</div>
+      <div>
+        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: '500', color: '#142845', margin: '0 0 5px', lineHeight: 1.2 }}>
+          Gabriela Muñoz
+        </p>
+        <p style={{ fontSize: 11, fontWeight: '500', color: '#8A9BAD', margin: 0 }}>Administración</p>
+      </div>
+    </button>
+  )
+}
+
 function SectionTitle({ children }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
@@ -145,7 +186,7 @@ function BellButton({ trabajosStale, onVerTrabajo }) {
         <div className="anim-slide-down" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: '#fff', borderRadius: '8px', boxShadow: '0 12px 40px rgba(20,40,69,0.22)', border: '1px solid #e5e7eb', zIndex: 200, overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', background: '#fafbfc' }}>
             <p style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#142845' }}>
-              Sin movimiento · +7 días
+              Sin movimiento · +3 días
             </p>
             {count === 0 && (
               <p style={{ fontSize: '12px', color: '#8A9BAD', marginTop: '4px' }}>Todos los trabajos están al día ✓</p>
@@ -260,7 +301,7 @@ export default function Trabajos() {
           <div style={{ width: '38px', height: '38px', border: '1.5px solid #C5A96A', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '17px', fontWeight: '600', color: '#C5A96A' }}>120</span>
           </div>
-          <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Notaría Pública No. 120 · Monterrey</span>
+          <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Notaría Pública 120 · Monterrey</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {userName && <span style={{ fontSize: '12px', fontWeight: '500', color: '#8A9BAD' }}>{userName}</span>}
@@ -298,7 +339,7 @@ export default function Trabajos() {
           <span style={{ fontSize: '10px', fontWeight: '600', color: '#C5A96A', letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sistema de gestión</span>
         </div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '46px', fontWeight: '600', color: '#ffffff', margin: '0 0 10px', lineHeight: 1.1 }}>
-          Notaría Pública No. 120
+          Notaría Pública 120
         </h1>
         <p style={{ fontSize: '13px', color: '#8A9BAD', letterSpacing: '0.06em', margin: '0 0 28px' }}>Nuevo León · Monterrey</p>
 
@@ -364,6 +405,14 @@ export default function Trabajos() {
                 </div>
               </div>
             )}
+
+            {/* Sección Administración */}
+            <div style={{ marginTop: '32px' }}>
+              <SectionTitle>Administración</SectionTitle>
+              <div style={{ maxWidth: '220px' }}>
+                <AdminCard onClick={() => navigate('/admin/gabriela')} />
+              </div>
+            </div>
           </>
         )}
       </div>

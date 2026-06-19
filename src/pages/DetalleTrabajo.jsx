@@ -136,11 +136,6 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={lbl}>Número de instrumento</label>
-            <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={lbl}>Fecha de ingreso</label>
             <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
           </div>
@@ -173,7 +168,18 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
 
 /* ── Checklist Item ── */
 function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, onDragOver, onDrop, onDragEnd }) {
-  const cfg = ESTADO_CFG[item.estado] || ESTADO_CFG.pendiente
+  const [animEstado, setAnimEstado] = useState(item.estado)
+  const [flipping, setFlipping] = useState(false)
+
+  useEffect(() => {
+    if (item.estado !== animEstado) {
+      setFlipping(true)
+      const t = setTimeout(() => { setAnimEstado(item.estado); setFlipping(false) }, 160)
+      return () => clearTimeout(t)
+    }
+  }, [item.estado])
+
+  const cfg = ESTADO_CFG[animEstado] || ESTADO_CFG.pendiente
   return (
     <div
       draggable
@@ -186,7 +192,8 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
         padding: '10px 14px', borderRadius: '6px',
         border: `1px solid ${isDragOver ? 'var(--gold)' : cfg.border}`,
         background: isDragging ? 'rgba(197,169,106,0.08)' : cfg.bg,
-        cursor: 'grab', transition: 'border-color 0.15s, background 0.15s, opacity 0.15s, transform 0.15s',
+        cursor: 'grab',
+        transition: 'border-color 0.3s ease, background 0.3s ease, opacity 0.15s, transform 0.15s',
         opacity: isDragging ? 0.5 : 1,
         transform: isDragOver && !isDragging ? 'scaleX(1.01)' : 'none',
         userSelect: 'none',
@@ -195,15 +202,31 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
       <div style={{ color: 'var(--text-light)', fontSize: '13px', marginRight: '10px', flexShrink: 0, cursor: 'grab', lineHeight: 1 }}>⠿</div>
       <div
         onClick={e => { e.stopPropagation(); onEstado(item.id, item.estado) }}
-        style={{ width: '28px', height: '28px', borderRadius: '50%', background: cfg.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700', flexShrink: 0, cursor: 'pointer', transition: 'transform 0.15s', marginRight: '10px' }}
-        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        style={{
+          width: '28px', height: '28px', borderRadius: '50%', background: cfg.color, color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: '700',
+          flexShrink: 0, cursor: 'pointer', marginRight: '10px',
+          transition: 'background 0.3s ease, transform 0.15s',
+          transform: flipping ? 'scale(0.7)' : 'scale(1)',
+        }}
+        onMouseEnter={e => { if (!flipping) e.currentTarget.style.transform = 'scale(1.1)' }}
+        onMouseLeave={e => { if (!flipping) e.currentTarget.style.transform = 'scale(1)' }}
       >{cfg.icon}</div>
       <span
         onClick={e => { e.stopPropagation(); onEstado(item.id, item.estado) }}
-        style={{ fontSize: '13px', flex: 1, color: item.estado === 'no_aplica' ? 'var(--text-light)' : 'var(--navy-dark)', textDecoration: item.estado === 'no_aplica' ? 'line-through' : 'none', fontWeight: item.estado === 'hecho' ? '500' : '400', cursor: 'pointer' }}
+        style={{
+          fontSize: '13px', flex: 1, cursor: 'pointer',
+          color: animEstado === 'no_aplica' ? 'var(--text-light)' : 'var(--navy-dark)',
+          textDecoration: animEstado === 'no_aplica' ? 'line-through' : 'none',
+          fontWeight: animEstado === 'hecho' ? '500' : '400',
+          transition: 'color 0.3s ease, text-decoration 0.3s ease',
+        }}
       >{item.paso}</span>
-      <span style={{ fontSize: '9px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: cfg.color, marginLeft: '10px', flexShrink: 0 }}>{cfg.label}</span>
+      <span style={{
+        fontSize: '9px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase',
+        color: cfg.color, marginLeft: '10px', flexShrink: 0,
+        transition: 'color 0.3s ease',
+      }}>{cfg.label}</span>
     </div>
   )
 }

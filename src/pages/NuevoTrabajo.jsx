@@ -176,10 +176,6 @@ export default function NuevoTrabajo() {
               </div>
             </Field>
 
-            <Field label="Número de instrumento">
-              <input name="numero_instrumento" value={form.numero_instrumento} onChange={handleChange} placeholder="Ej. 4,521" className="field-input" />
-            </Field>
-
             <Field label="Fecha de ingreso">
               <input name="fecha_ingreso" value={form.fecha_ingreso} onChange={handleChange} type="date" className="field-input" />
             </Field>
