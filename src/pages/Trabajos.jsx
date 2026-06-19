@@ -57,9 +57,6 @@ function AbogadoCard({ emp, onClick, big = false }) {
         }}>
           {emp.nombre}
         </p>
-        <p style={{ fontSize: big ? 13 : 11, fontWeight: '500', color: '#8A9BAD', margin: 0 }}>
-          {emp.total} {emp.total === 1 ? 'trabajo' : 'trabajos'}
-        </p>
       </div>
     </button>
   )

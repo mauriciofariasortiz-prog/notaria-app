@@ -286,28 +286,19 @@ export default function EmpleadoTrabajos() {
 
       <main style={{ padding: '1.75rem', maxWidth: '880px', margin: '0 auto' }}>
 
-        {/* Stats */}
-        {!loading && total > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '1.25rem' }}>
-            {[
-              { label: 'Total',       value: total,              accent: 'var(--navy-dark)' },
-              { label: 'En proceso',  value: enProceso.length,   accent: 'var(--amber)' },
-              { label: 'Completados', value: completados.length,  accent: 'var(--green)' },
-            ].map(({ label, value, accent }, i) => (
-              <div key={label} className={`stat-card anim-fade-up stagger-${i + 1}`}>
-                <p style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '6px' }}>{label}</p>
-                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '34px', fontWeight: '500', color: accent, lineHeight: 1 }}>{value}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Búsqueda y filtros */}
         {!loading && total > 0 && (
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: 'var(--text-light)', pointerEvents: 'none' }}>🔍</span>
-              <input value={busqueda} onChange={e => setBusqueda(e.target.value)} placeholder="Buscar por cliente o asunto..." style={{ ...inputStyle, width: '100%', paddingLeft: '30px', boxSizing: 'border-box' }} />
+              <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'rgba(197,169,106,0.8)', pointerEvents: 'none', lineHeight: 1 }}>🔍</span>
+              <input
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                placeholder="Buscar por cliente, asunto o folio..."
+                style={{ width: '100%', boxSizing: 'border-box', padding: '14px 16px 14px 46px', border: '1.5px solid var(--border)', borderRadius: '8px', fontSize: '14px', color: 'var(--text)', background: '#FAFBFC', fontFamily: 'inherit', outline: 'none', transition: 'border-color 0.18s' }}
+                onFocus={e => e.target.style.borderColor = 'var(--gold)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              />
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={inputStyle}>
