@@ -38,15 +38,27 @@ const TIPO_CFG = {
   Junta: { bg: '#C5A96A', border: '#B8965A', text: '#142845', badge: 'rgba(197,169,106,0.13)',  badgeText: '#B07D2A' },
 }
 
-/* ── Modal nuevo evento ── */
-function NuevoEventoModal({ empleados, onClose, onSave }) {
+/* ── Parsear fecha_hora ISO → { fecha, hora } ── */
+function parseFechaHora(isoString) {
+  if (!isoString) return { fecha: new Date().toISOString().split('T')[0], hora: '10:00' }
+  const d = new Date(isoString)
+  const fecha = d.toLocaleDateString('en-CA') // YYYY-MM-DD local
+  const hora  = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  return { fecha, hora }
+}
+
+/* ── Modal crear / editar evento ── */
+function EventoModal({ empleados, eventoEditar, onClose, onSave, onUpdate }) {
+  const esEdicion = !!eventoEditar
+  const parsed    = parseFechaHora(eventoEditar?.fecha_hora)
+
   const [form, setForm] = useState({
-    tipo:       'Firma',
-    cliente:    '',
-    asunto:     '',
-    abogado_id: '',
-    fecha:      new Date().toISOString().split('T')[0],
-    hora:       '10:00',
+    tipo:       eventoEditar?.tipo       || 'Firma',
+    cliente:    eventoEditar?.cliente    || '',
+    asunto:     eventoEditar?.asunto     || '',
+    abogado_id: eventoEditar?.abogado_id || '',
+    fecha:      parsed.fecha,
+    hora:       parsed.hora,
   })
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
@@ -66,16 +78,32 @@ function NuevoEventoModal({ empleados, onClose, onSave }) {
 
     setSaving(true)
     const fecha_hora = new Date(`${form.fecha}T${form.hora}:00`).toISOString()
-    const { data, error: dbErr } = await supabase.from('eventos_calendario').insert([{
+    const payload = {
       tipo:       form.tipo,
       cliente:    form.cliente.trim(),
       asunto:     form.asunto,
       abogado_id: form.abogado_id || null,
       fecha_hora,
-    }]).select('*, empleados(nombre)').single()
+    }
 
-    if (dbErr) { setError('Error al guardar. Intenta de nuevo.'); setSaving(false); return }
-    onSave(data)
+    if (esEdicion) {
+      const { data, error: dbErr } = await supabase
+        .from('eventos_calendario')
+        .update(payload)
+        .eq('id', eventoEditar.id)
+        .select('*, empleados(nombre)')
+        .single()
+      if (dbErr) { setError('Error al guardar. Intenta de nuevo.'); setSaving(false); return }
+      onUpdate(data)
+    } else {
+      const { data, error: dbErr } = await supabase
+        .from('eventos_calendario')
+        .insert([payload])
+        .select('*, empleados(nombre)')
+        .single()
+      if (dbErr) { setError('Error al guardar. Intenta de nuevo.'); setSaving(false); return }
+      onSave(data)
+    }
     setSaving(false)
   }
 
@@ -86,8 +114,12 @@ function NuevoEventoModal({ empleados, onClose, onSave }) {
         {/* Header del modal */}
         <div style={{ background: 'var(--navy-dark)', padding: '1rem 1.4rem', borderBottom: '2px solid var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#fff' }}>Nuevo evento</p>
-            <p style={{ fontSize: '11px', color: 'rgba(197,169,106,0.8)', marginTop: '1px' }}>Agrega una firma o junta al calendario</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#fff' }}>
+              {esEdicion ? 'Editar evento' : 'Nuevo evento'}
+            </p>
+            <p style={{ fontSize: '11px', color: 'rgba(197,169,106,0.8)', marginTop: '1px' }}>
+              {esEdicion ? 'Modifica los datos del evento' : 'Agrega una firma o junta al calendario'}
+            </p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', color: 'rgba(197,169,106,0.7)', cursor: 'pointer', padding: '2px 6px', lineHeight: 1 }}>×</button>
         </div>
@@ -172,7 +204,7 @@ function NuevoEventoModal({ empleados, onClose, onSave }) {
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px', borderTop: '1px solid var(--border)', marginTop: '4px' }}>
             <button type="button" onClick={onClose} className="btn-ghost-dark">Cancelar</button>
             <button type="submit" disabled={saving} className="btn-gold" style={{ padding: '10px 24px' }}>
-              {saving ? 'Guardando...' : 'Agregar al calendario'}
+              {saving ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Agregar al calendario'}
             </button>
           </div>
         </form>
@@ -182,15 +214,16 @@ function NuevoEventoModal({ empleados, onClose, onSave }) {
 }
 
 /* ── Tarjeta de evento en el calendario ── */
-function EventoCard({ evento, onDelete }) {
+function EventoCard({ evento, onDelete, onEdit }) {
   const [hover, setHover] = useState(false)
   const cfg = TIPO_CFG[evento.tipo] || TIPO_CFG.Firma
 
   return (
     <div
+      onClick={() => onEdit(evento)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '6px', padding: '8px 10px', position: 'relative', transition: 'transform 0.15s, box-shadow 0.15s', transform: hover ? 'translateY(-1px)' : 'none', boxShadow: hover ? '0 4px 12px rgba(20,40,69,0.2)' : 'none' }}
+      style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '6px', padding: '8px 10px', position: 'relative', transition: 'transform 0.15s, box-shadow 0.15s', transform: hover ? 'translateY(-1px)' : 'none', boxShadow: hover ? '0 4px 12px rgba(20,40,69,0.2)' : 'none', cursor: 'pointer' }}
     >
       {/* Hora + tipo badge */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
@@ -213,13 +246,20 @@ function EventoCard({ evento, onDelete }) {
         <p style={{ fontSize: '10px', color: cfg.text, opacity: 0.6 }}>{evento.empleados.nombre}</p>
       )}
 
-      {/* Botón eliminar al hacer hover */}
+      {/* Acciones al hacer hover: editar + eliminar */}
       {hover && (
-        <button
-          onClick={e => { e.stopPropagation(); onDelete(evento.id) }}
-          style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(0,0,0,0.25)', border: 'none', borderRadius: '3px', color: cfg.text, fontSize: '11px', lineHeight: 1, padding: '2px 5px', cursor: 'pointer', opacity: 0.8 }}
-          title="Eliminar evento"
-        >×</button>
+        <div style={{ position: 'absolute', top: '4px', right: '4px', display: 'flex', gap: '3px' }}>
+          <button
+            onClick={e => { e.stopPropagation(); onEdit(evento) }}
+            style={{ background: 'rgba(0,0,0,0.22)', border: 'none', borderRadius: '3px', color: cfg.text, fontSize: '10px', lineHeight: 1, padding: '2px 5px', cursor: 'pointer' }}
+            title="Editar evento"
+          >✎</button>
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(evento.id) }}
+            style={{ background: 'rgba(0,0,0,0.22)', border: 'none', borderRadius: '3px', color: cfg.text, fontSize: '11px', lineHeight: 1, padding: '2px 5px', cursor: 'pointer' }}
+            title="Eliminar evento"
+          >×</button>
+        </div>
       )}
     </div>
   )
@@ -228,11 +268,12 @@ function EventoCard({ evento, onDelete }) {
 /* ── Página principal ── */
 export default function Calendario() {
   const navigate  = useNavigate()
-  const [eventos,   setEventos]   = useState([])
-  const [empleados, setEmpleados] = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [semana,    setSemana]    = useState(() => inicioSemana(new Date()))
+  const [eventos,       setEventos]       = useState([])
+  const [empleados,     setEmpleados]     = useState([])
+  const [loading,       setLoading]       = useState(true)
+  const [modalOpen,     setModalOpen]     = useState(false)
+  const [eventoEditar,  setEventoEditar]  = useState(null)
+  const [semana,        setSemana]        = useState(() => inicioSemana(new Date()))
 
   useEffect(() => { cargar() }, [])
 
@@ -246,15 +287,31 @@ export default function Calendario() {
     setLoading(false)
   }
 
+  const sortEventos = (list) => [...list].sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora))
+
   const handleSave = (nuevoEvento) => {
-    setEventos(prev => [...prev, nuevoEvento].sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora)))
+    setEventos(prev => sortEventos([...prev, nuevoEvento]))
     setModalOpen(false)
+  }
+
+  const handleUpdate = (eventoActualizado) => {
+    setEventos(prev => sortEventos(prev.map(e => e.id === eventoActualizado.id ? eventoActualizado : e)))
+    setEventoEditar(null)
   }
 
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este evento?')) return
     await supabase.from('eventos_calendario').delete().eq('id', id)
     setEventos(prev => prev.filter(e => e.id !== id))
+  }
+
+  const abrirEdicion = (evento) => {
+    setEventoEditar(evento)
+  }
+
+  const cerrarModal = () => {
+    setModalOpen(false)
+    setEventoEditar(null)
   }
 
   const diasSemana = DIAS.map((nombre, i) => ({ nombre, fecha: addDays(semana, i) }))
@@ -322,7 +379,7 @@ export default function Calendario() {
 
         {/* Botón + Evento */}
         <button
-          onClick={() => setModalOpen(true)}
+          onClick={() => { setEventoEditar(null); setModalOpen(true) }}
           className="btn-gold"
           style={{ padding: '8px 16px', fontSize: '11px', whiteSpace: 'nowrap' }}
         >+ Evento</button>
@@ -358,7 +415,7 @@ export default function Calendario() {
 
                   {/* Botón rápido agregar en ese día */}
                   <button
-                    onClick={() => setModalOpen(true)}
+                    onClick={() => { setEventoEditar(null); setModalOpen(true) }}
                     style={{ background: 'none', border: '1px dashed rgba(197,169,106,0.3)', borderRadius: '4px', color: 'rgba(197,169,106,0.5)', fontSize: '16px', padding: '3px', cursor: 'pointer', transition: 'all 0.15s', lineHeight: 1 }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(197,169,106,0.3)'; e.currentTarget.style.color = 'rgba(197,169,106,0.5)' }}
@@ -373,7 +430,7 @@ export default function Calendario() {
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {evs.map(ev => (
-                        <EventoCard key={ev.id} evento={ev} onDelete={handleDelete} />
+                        <EventoCard key={ev.id} evento={ev} onDelete={handleDelete} onEdit={abrirEdicion} />
                       ))}
                     </div>
                   )}
@@ -393,12 +450,14 @@ export default function Calendario() {
         </div>
       )}
 
-      {/* Modal */}
-      {modalOpen && (
-        <NuevoEventoModal
+      {/* Modal crear / editar */}
+      {(modalOpen || eventoEditar) && (
+        <EventoModal
           empleados={empleados}
-          onClose={() => setModalOpen(false)}
+          eventoEditar={eventoEditar}
+          onClose={cerrarModal}
           onSave={handleSave}
+          onUpdate={handleUpdate}
         />
       )}
     </div>
