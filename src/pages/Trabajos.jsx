@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate } from 'react-router-dom'
+import * as XLSX from 'xlsx'
 
 function initiales(nombre = '') {
   const parts = nombre.trim().split(' ').filter(Boolean)
@@ -223,14 +224,18 @@ function BellButton({ trabajosStale, onVerTrabajo }) {
   )
 }
 
+const ADMIN_EMAIL = 'mauriciofariasortiz@gmail.com'
+
 export default function Trabajos() {
   const [empleados,     setEmpleados]     = useState([])
   const [userName,      setUserName]      = useState('')
+  const [userEmail,     setUserEmail]     = useState('')
   const [loading,       setLoading]       = useState(true)
   const [busqueda,      setBusqueda]      = useState('')
   const [todosJobs,     setTodosJobs]     = useState([])
   const [empMap,        setEmpMap]        = useState({})
   const [trabajosStale, setTrabajosStale] = useState([])
+  const [descargando,   setDescargando]   = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => { cargar() }, [])
@@ -243,6 +248,7 @@ export default function Trabajos() {
     ])
 
     if (user) {
+      setUserEmail(user.email || '')
       const { data: emp } = await supabase.from('empleados').select('nombre').eq('user_id', user.id).single()
       setUserName(emp?.nombre || user.email?.split('@')[0] || '')
     }
@@ -277,6 +283,89 @@ export default function Trabajos() {
     navigate('/login')
   }
 
+  const descargarRespaldo = async () => {
+    setDescargando(true)
+    try {
+      const [{ data: trabajos }, { data: checklist }, { data: notas }, { data: empleadosData }] = await Promise.all([
+        supabase.from('trabajos').select('*').order('fecha_ingreso', { ascending: false }),
+        supabase.from('checklist').select('*').order('trabajo_id').order('orden'),
+        supabase.from('notas').select('*').order('created_at'),
+        supabase.from('empleados').select('id, nombre'),
+      ])
+
+      const empNombre = Object.fromEntries((empleadosData || []).map(e => [e.id, e.nombre]))
+
+      const fmt = (v) => v ? new Date(v).toLocaleString('es-MX') : ''
+      const fmtDate = (v) => v ? new Date(v + 'T00:00:00').toLocaleDateString('es-MX') : ''
+
+      const wsTrabajos = XLSX.utils.json_to_sheet((trabajos || []).map(t => ({
+        'ID':                   t.id,
+        'Cliente':              t.cliente || '',
+        'Asunto':               t.asunto || '',
+        'Tipo instrumento':     t.numero_escritura || '',
+        'Número instrumento':   t.numero_instrumento || '',
+        'Descripción':          t.descripcion || '',
+        'Estado':               t.status === 'completado' ? 'Completado' : 'En proceso',
+        'Encargado':            empNombre[t.encargado_id] || '',
+        'Fecha ingreso':        fmtDate(t.fecha_ingreso),
+        'Última actividad':     fmt(t.ultima_actividad),
+        'Orden':                t.orden ?? '',
+      })))
+
+      const wsChecklist = XLSX.utils.json_to_sheet((checklist || []).map(c => ({
+        'ID paso':         c.id,
+        'Trabajo ID':      c.trabajo_id,
+        'Paso':            c.paso || '',
+        'Estado':          c.estado || '',
+        'Orden':           c.orden ?? '',
+      })))
+
+      const wsNotas = XLSX.utils.json_to_sheet((notas || []).map(n => ({
+        'ID nota':     n.id,
+        'Trabajo ID':  n.trabajo_id,
+        'Texto':       n.texto || '',
+        'Autor':       n.autor || '',
+        'Fecha':       fmt(n.created_at),
+      })))
+
+      // Anchos de columna automáticos aproximados
+      const autoWidth = (ws, data, keys) => {
+        ws['!cols'] = keys.map(k => ({
+          wch: Math.min(50, Math.max(k.length, ...data.map(r => String(r[k] || '').length)))
+        }))
+      }
+
+      const trabajosRows = (trabajos || []).map(t => ({
+        'ID': t.id, 'Cliente': t.cliente || '', 'Asunto': t.asunto || '',
+        'Tipo instrumento': t.numero_escritura || '', 'Número instrumento': t.numero_instrumento || '',
+        'Descripción': t.descripcion || '', 'Estado': t.status === 'completado' ? 'Completado' : 'En proceso',
+        'Encargado': empNombre[t.encargado_id] || '', 'Fecha ingreso': fmtDate(t.fecha_ingreso),
+        'Última actividad': fmt(t.ultima_actividad), 'Orden': t.orden ?? '',
+      }))
+      autoWidth(wsTrabajos, trabajosRows, Object.keys(trabajosRows[0] || {}))
+
+      const checkRows = (checklist || []).map(c => ({
+        'ID paso': c.id, 'Trabajo ID': c.trabajo_id, 'Paso': c.paso || '', 'Estado': c.estado || '', 'Orden': c.orden ?? '',
+      }))
+      autoWidth(wsChecklist, checkRows, Object.keys(checkRows[0] || {}))
+
+      const notasRows = (notas || []).map(n => ({
+        'ID nota': n.id, 'Trabajo ID': n.trabajo_id, 'Texto': n.texto || '', 'Autor': n.autor || '', 'Fecha': fmt(n.created_at),
+      }))
+      autoWidth(wsNotas, notasRows, Object.keys(notasRows[0] || {}))
+
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, wsTrabajos,  'Trabajos')
+      XLSX.utils.book_append_sheet(wb, wsChecklist, 'Checklist')
+      XLSX.utils.book_append_sheet(wb, wsNotas,     'Notas')
+
+      const fecha = new Date().toISOString().split('T')[0]
+      XLSX.writeFile(wb, `respaldo-notaria-${fecha}.xlsx`)
+    } finally {
+      setDescargando(false)
+    }
+  }
+
   const resultados = useMemo(() => {
     if (!busqueda.trim()) return []
     const q = busqueda.toLowerCase()
@@ -305,6 +394,20 @@ export default function Trabajos() {
 
           {/* Campana */}
           <BellButton trabajosStale={trabajosStale} onVerTrabajo={id => navigate(`/trabajos/${id}`)} />
+
+          {/* Respaldo — solo admin */}
+          {userEmail === ADMIN_EMAIL && (
+            <button
+              onClick={descargarRespaldo}
+              disabled={descargando}
+              style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: descargando ? 'wait' : 'pointer', transition: 'border-color 0.15s, color 0.15s', display: 'flex', alignItems: 'center', gap: '5px' }}
+              onMouseEnter={e => { if (!descargando) { e.currentTarget.style.borderColor = '#C5A96A'; e.currentTarget.style.color = '#C5A96A' } }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
+              title="Descargar respaldo Excel de todos los datos"
+            >
+              {descargando ? '⏳ Generando...' : '⬇ Respaldo'}
+            </button>
+          )}
 
           {/* Calendario */}
           <button
