@@ -326,7 +326,7 @@ export default function Calendario() {
   const rango = `${fmtFechaCorta(semana)} – ${fmtFechaCorta(addDays(semana, 6))}, ${semana.getFullYear()}`
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="anim-page-enter" style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* Header */}
       <header style={{ background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)', padding: '0 1.75rem', height: '64px', display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -394,8 +394,9 @@ export default function Calendario() {
 
       {/* Grid semanal */}
       {loading ? (
-        <div style={{ padding: '1.25rem 1.75rem', display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
-          {DIAS.map(d => <div key={d} style={{ height: '300px', borderRadius: '6px' }} className="skeleton" />)}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', gap: '14px', color: 'var(--text-light)', fontSize: '12px', letterSpacing: '0.06em' }}>
+          <div className="spinner" />
+          <span>Cargando eventos...</span>
         </div>
       ) : (
         <div style={{ padding: '1.25rem 1.75rem', overflowX: 'auto' }}>

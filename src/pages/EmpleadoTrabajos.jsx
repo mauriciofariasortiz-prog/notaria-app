@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate, useParams } from 'react-router-dom'
+import { Clock, CheckCircle2 } from 'lucide-react'
+import Spinner from '../components/Spinner'
 
 function initiales(nombre = '') {
   const parts = nombre.trim().split(' ').filter(Boolean)
@@ -10,14 +12,17 @@ function initiales(nombre = '') {
   return last.length <= 3 ? first + last : first + last[0]
 }
 
-function SectionLabel({ children, count }) {
+function SectionLabel({ children, count, icon: Icon }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-      <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--gold)', whiteSpace: 'nowrap' }}>{children}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+      <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--navy-dark)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '5px', opacity: 0.75 }}>
+        {Icon && <Icon size={12} strokeWidth={2.5} />}
+        {children}
+      </span>
       {count !== undefined && (
         <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--text-light)', background: 'var(--silver-light)', borderRadius: '99px', padding: '1px 8px', border: '1px solid var(--border)' }}>{count}</span>
       )}
-      <div style={{ flex: 1, height: '1px', background: 'var(--gold-border)' }} />
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
     </div>
   )
 }
@@ -284,7 +289,7 @@ export default function EmpleadoTrabajos() {
         </div>
       </header>
 
-      <main style={{ padding: '1.75rem', maxWidth: '880px', margin: '0 auto' }}>
+      <main className="anim-page-enter" style={{ padding: '1.75rem', maxWidth: '880px', margin: '0 auto' }}>
 
         {/* Búsqueda y filtros */}
         {!loading && (
@@ -325,9 +330,7 @@ export default function EmpleadoTrabajos() {
         )}
 
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[1,2,3].map(i => <div key={i} style={{ height: '90px', borderRadius: '6px' }} className="skeleton" />)}
-          </div>
+          <Spinner text="Cargando trabajos..." />
         ) : total === 0 ? (
           <div className="anim-fade-up" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>
             Este empleado no tiene trabajos asignados.
@@ -340,7 +343,7 @@ export default function EmpleadoTrabajos() {
           <>
             {enProcesoFiltrado.length > 0 && (
               <div style={{ marginBottom: '2rem' }} className="anim-fade-in">
-                <SectionLabel count={enProcesoFiltrado.length}>En proceso</SectionLabel>
+                <SectionLabel count={enProcesoFiltrado.length} icon={Clock}>En proceso</SectionLabel>
                 {hayFiltroActivo ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {enProcesoFiltrado.map((t, i) => (
@@ -355,7 +358,7 @@ export default function EmpleadoTrabajos() {
 
             {completadosFiltrado.length > 0 && (
               <div className="anim-fade-in">
-                <SectionLabel count={completadosFiltrado.length}>Completados</SectionLabel>
+                <SectionLabel count={completadosFiltrado.length} icon={CheckCircle2}>Completados</SectionLabel>
                 {hayFiltroActivo ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {completadosFiltrado.map((t, i) => (

@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
+import { Users, Briefcase } from 'lucide-react'
+import Spinner from '../components/Spinner'
 
 function initiales(nombre = '') {
   const parts = nombre.trim().split(' ').filter(Boolean)
@@ -16,7 +18,7 @@ const NAV_COLORS = ['#2C5282', '#1F4073', '#3A6298', '#243F6A', '#4A72B8']
 function AbogadoCard({ emp, onClick, big = false }) {
   const [hovered, setHovered] = useState(false)
   const bg = NAV_COLORS[emp.nombre.charCodeAt(0) % NAV_COLORS.length]
-  const avatarSize = big ? 80 : 56
+  const avatarSize = big ? 84 : 60
 
   return (
     <button
@@ -25,36 +27,42 @@ function AbogadoCard({ emp, onClick, big = false }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: '#ffffff',
-        border: `1px solid ${hovered ? '#3A6298' : '#e5e7eb'}`,
-        borderTop: `3px solid ${hovered ? '#B8C0CC' : 'transparent'}`,
-        borderRadius: '14px',
-        padding: big ? '36px 20px 30px' : '22px 14px 20px',
+        border: `1px solid ${hovered ? 'rgba(44,82,130,0.3)' : 'rgba(184,196,208,0.35)'}`,
+        borderTop: `3px solid ${hovered ? '#2C5282' : 'transparent'}`,
+        borderRadius: 'var(--radius-lg)',
+        padding: big ? '40px 24px 32px' : '26px 16px 22px',
         cursor: 'pointer',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: big ? '16px' : '11px',
+        gap: big ? '18px' : '13px',
         textAlign: 'center',
         width: '100%', height: '100%',
-        transition: 'border-color 0.18s, box-shadow 0.18s, transform 0.18s',
-        boxShadow: hovered ? '0 6px 24px rgba(44,82,130,0.13)' : '0 1px 4px rgba(0,0,0,0.06)',
-        transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
+        transition: 'border-color 0.22s, box-shadow 0.22s, transform 0.22s cubic-bezier(0.22,1,0.36,1)',
+        boxShadow: hovered
+          ? '0 8px 28px rgba(44,82,130,0.16)'
+          : '0 1px 4px rgba(44,82,130,0.06), 0 0 0 0 transparent',
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
       }}
     >
       <div style={{
         width: avatarSize, height: avatarSize, borderRadius: '50%',
-        background: bg,
+        background: `linear-gradient(135deg, ${bg} 0%, ${bg}cc 100%)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Cormorant Garamond', serif",
-        fontSize: big ? 30 : 20, fontWeight: '600', color: '#B8C0CC',
+        fontSize: big ? 32 : 22, fontWeight: '600', color: '#B8C0CC',
         flexShrink: 0,
-        boxShadow: '0 2px 10px rgba(44,82,130,0.2)',
+        boxShadow: hovered
+          ? '0 4px 16px rgba(44,82,130,0.35)'
+          : '0 2px 10px rgba(44,82,130,0.18)',
+        transition: 'box-shadow 0.22s',
       }}>
         {initiales(emp.nombre)}
       </div>
       <div>
         <p style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: big ? 22 : 15, fontWeight: '500',
-          color: '#2C5282', margin: '0 0 5px', lineHeight: 1.2,
+          fontSize: big ? 24 : 16, fontWeight: '500',
+          color: '#2C5282', margin: 0, lineHeight: 1.2,
+          transition: 'color 0.18s',
         }}>
           {emp.nombre}
         </p>
@@ -104,13 +112,14 @@ function AdminCard({ onClick }) {
   )
 }
 
-function SectionTitle({ children }) {
+function SectionTitle({ children, icon: Icon }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-      <span style={{ fontSize: '11px', fontWeight: '600', color: '#8A9BAD', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px' }}>
+      <span style={{ fontSize: '11px', fontWeight: '600', color: '#8A9BAD', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {Icon && <Icon size={13} strokeWidth={2.2} style={{ opacity: 0.7 }} />}
         {children}
       </span>
-      <div style={{ flex: 1, height: '1px', background: '#e5e7eb' }} />
+      <div style={{ flex: 1, height: '1px', background: 'rgba(184,196,208,0.45)' }} />
     </div>
   )
 }
@@ -455,11 +464,11 @@ export default function Trabajos() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 24px 56px' }}>
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '48px 24px 64px' }} className="anim-page-enter">
 
         {busqueda.trim() ? (
           <>
-            <SectionTitle>
+            <SectionTitle icon={Briefcase}>
               {resultados.length === 0
                 ? 'Sin resultados'
                 : `${resultados.length} resultado${resultados.length !== 1 ? 's' : ''} para "${busqueda}"`}
@@ -469,7 +478,7 @@ export default function Trabajos() {
                 No se encontró ningún trabajo con ese término.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {resultados.map(j => (
                   <ResultadoBusqueda
                     key={j.id}
@@ -483,16 +492,14 @@ export default function Trabajos() {
           </>
         ) : (
           <>
-            <SectionTitle>Abogados</SectionTitle>
+            <SectionTitle icon={Users}>Abogados</SectionTitle>
 
             {loading ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', height: '200px' }}>
-                {[1,2].map(i => <div key={i} style={{ borderRadius: '14px', background: 'linear-gradient(90deg,#e8eaed 25%,#f4f5f7 50%,#e8eaed 75%)', backgroundSize: '400px 100%', animation: 'shimmer 1.4s ease infinite' }} />)}
-              </div>
+              <Spinner text="Cargando abogados..." />
             ) : (
-              <div style={{ display: 'flex', gap: '14px', alignItems: 'stretch' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'stretch' }}>
                 {principal && (
-                  <div style={{ flex: '0 0 220px' }} className="anim-fade-up">
+                  <div style={{ flex: '0 0 230px' }} className="anim-fade-up">
                     <AbogadoCard emp={principal} big onClick={() => navigate(`/empleados/${principal.id}`)} />
                   </div>
                 )}
@@ -507,8 +514,8 @@ export default function Trabajos() {
             )}
 
             {/* Sección Administración */}
-            <div style={{ marginTop: '32px' }}>
-              <SectionTitle>Administración</SectionTitle>
+            <div style={{ marginTop: '40px' }}>
+              <SectionTitle icon={Briefcase}>Administración</SectionTitle>
               <div style={{ maxWidth: '220px' }}>
                 <AdminCard onClick={() => navigate('/admin/gabriela')} />
               </div>

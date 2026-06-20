@@ -488,9 +488,11 @@ export default function DetalleTrabajo() {
   if (loading) return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <div style={{ background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)', height: '56px' }} />
-      <div style={{ padding: '1.5rem', maxWidth: '740px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ height: '130px', borderRadius: '6px' }} className="skeleton" />
-        <div style={{ height: '320px', borderRadius: '6px' }} className="skeleton" />
+      <div style={{ padding: '1.5rem', maxWidth: '740px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 1rem', gap: '14px', color: 'var(--text-light)', fontSize: '12px', letterSpacing: '0.06em' }}>
+          <div className="spinner" />
+          <span>Cargando trabajo...</span>
+        </div>
       </div>
     </div>
   )
@@ -512,7 +514,7 @@ export default function DetalleTrabajo() {
 
   return (
     <>
-      <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+      <div className="anim-page-enter" style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
         {/* Header */}
         <div style={{ background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', gap: '12px' }}>

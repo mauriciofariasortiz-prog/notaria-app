@@ -110,7 +110,7 @@ export default function NuevoTrabajo() {
   const selectStyle = { padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--silver-border)', fontSize: '13px', color: 'var(--text)', background: '#FAFBFC', fontFamily: 'inherit', cursor: 'pointer' }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div className="anim-page-enter" style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* Header */}
       <div style={{ background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)', padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', gap: '12px' }}>
