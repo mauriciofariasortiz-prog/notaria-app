@@ -287,7 +287,7 @@ export default function EmpleadoTrabajos() {
       <main style={{ padding: '1.75rem', maxWidth: '880px', margin: '0 auto' }}>
 
         {/* Búsqueda y filtros */}
-        {!loading && total > 0 && (
+        {!loading && (
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ position: 'relative' }}>
               <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'rgba(197,169,106,0.8)', pointerEvents: 'none', lineHeight: 1 }}>🔍</span>
