@@ -223,40 +223,40 @@ function EventoCard({ evento, onDelete, onEdit }) {
       onClick={() => onEdit(evento)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '6px', padding: '8px 10px', position: 'relative', transition: 'transform 0.15s, box-shadow 0.15s', transform: hover ? 'translateY(-1px)' : 'none', boxShadow: hover ? '0 4px 12px rgba(20,40,69,0.2)' : 'none', cursor: 'pointer' }}
+      style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '8px', padding: '14px 16px', position: 'relative', transition: 'transform 0.15s, box-shadow 0.15s', transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? '0 6px 18px rgba(20,40,69,0.25)' : '0 1px 4px rgba(20,40,69,0.1)', cursor: 'pointer' }}
     >
       {/* Hora + tipo badge */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-        <span style={{ fontSize: '10px', fontWeight: '700', color: cfg.text, opacity: 0.75 }}>{fmtHora(evento.fecha_hora)}</span>
-        <span style={{ fontSize: '9px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: cfg.text, opacity: 0.85 }}>{evento.tipo}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '12px', fontWeight: '700', color: cfg.text, opacity: 0.8 }}>{fmtHora(evento.fecha_hora)}</span>
+        <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: cfg.text, opacity: 0.85, background: 'rgba(0,0,0,0.12)', borderRadius: '4px', padding: '2px 7px' }}>{evento.tipo}</span>
       </div>
 
       {/* Cliente */}
-      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '13px', fontWeight: '500', color: cfg.text, lineHeight: 1.3, marginBottom: '3px' }}>
+      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '17px', fontWeight: '500', color: cfg.text, lineHeight: 1.3, marginBottom: '5px' }}>
         {evento.cliente}
       </p>
 
       {/* Asunto */}
-      <p style={{ fontSize: '10px', color: cfg.text, opacity: 0.75, marginBottom: evento.empleados?.nombre ? '3px' : 0 }}>
+      <p style={{ fontSize: '12px', color: cfg.text, opacity: 0.75, marginBottom: evento.empleados?.nombre ? '5px' : 0, lineHeight: 1.4 }}>
         {evento.asunto}
       </p>
 
       {/* Abogado */}
       {evento.empleados?.nombre && (
-        <p style={{ fontSize: '10px', color: cfg.text, opacity: 0.6 }}>{evento.empleados.nombre}</p>
+        <p style={{ fontSize: '11px', color: cfg.text, opacity: 0.6, fontWeight: '500' }}>{evento.empleados.nombre}</p>
       )}
 
       {/* Acciones al hacer hover: editar + eliminar */}
       {hover && (
-        <div style={{ position: 'absolute', top: '4px', right: '4px', display: 'flex', gap: '3px' }}>
+        <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
           <button
             onClick={e => { e.stopPropagation(); onEdit(evento) }}
-            style={{ background: 'rgba(0,0,0,0.22)', border: 'none', borderRadius: '3px', color: cfg.text, fontSize: '10px', lineHeight: 1, padding: '2px 5px', cursor: 'pointer' }}
+            style={{ background: 'rgba(0,0,0,0.22)', border: 'none', borderRadius: '4px', color: cfg.text, fontSize: '12px', lineHeight: 1, padding: '4px 7px', cursor: 'pointer' }}
             title="Editar evento"
           >✎</button>
           <button
             onClick={e => { e.stopPropagation(); onDelete(evento.id) }}
-            style={{ background: 'rgba(0,0,0,0.22)', border: 'none', borderRadius: '3px', color: cfg.text, fontSize: '11px', lineHeight: 1, padding: '2px 5px', cursor: 'pointer' }}
+            style={{ background: 'rgba(0,0,0,0.22)', border: 'none', borderRadius: '4px', color: cfg.text, fontSize: '13px', lineHeight: 1, padding: '4px 7px', cursor: 'pointer' }}
             title="Eliminar evento"
           >×</button>
         </div>
@@ -428,7 +428,7 @@ export default function Calendario() {
                       <span style={{ fontSize: '11px', color: 'var(--text-light)' }}>—</span>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {evs.map(ev => (
                         <EventoCard key={ev.id} evento={ev} onDelete={handleDelete} onEdit={abrirEdicion} />
                       ))}
