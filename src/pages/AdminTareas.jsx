@@ -201,7 +201,7 @@ export default function AdminTareas() {
   const [tareas, setTareas] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [filtro, setFiltro] = useState('pendientes') // 'pendientes' | 'completadas' | 'todas'
+  const [filtro] = useState('pendientes')
   const navigate = useNavigate()
 
   useEffect(() => { cargar() }, [])
@@ -229,21 +229,7 @@ export default function AdminTareas() {
     filtro === 'completadas' ? t.completado  : true
   )
 
-  const pendientes  = tareas.filter(t => !t.completado).length
-  const completadas = tareas.filter(t =>  t.completado).length
-
-  const btnFiltro = (val, label) => (
-    <button
-      onClick={() => setFiltro(val)}
-      style={{
-        background: filtro === val ? '#2C5282' : 'transparent',
-        color: filtro === val ? '#B8C0CC' : '#8A9BAD',
-        border: `1px solid ${filtro === val ? '#2C5282' : '#e5e7eb'}`,
-        borderRadius: '99px', padding: '5px 14px', fontSize: '11px', fontWeight: '600',
-        cursor: 'pointer', transition: 'all 0.15s',
-      }}
-    >{label}</button>
-  )
+  const pendientes = tareas.filter(t => !t.completado).length
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7f8fa', fontFamily: "'Montserrat', sans-serif" }}>
@@ -280,27 +266,13 @@ export default function AdminTareas() {
           Gabriela Muñoz
         </h1>
         <p style={{ fontSize: '13px', color: '#8A9BAD', margin: '0 0 24px' }}>Tareas y recordatorios</p>
-        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '32px', fontWeight: '600', color: '#B8C0CC', margin: 0 }}>{pendientes}</p>
-            <p style={{ fontSize: '10px', color: '#8A9BAD', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Pendientes</p>
-          </div>
-          <div style={{ width: '1px', background: 'rgba(184,192,204,0.25)' }} />
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '32px', fontWeight: '600', color: '#2d7a4f', margin: 0 }}>{completadas}</p>
-            <p style={{ fontSize: '10px', color: '#8A9BAD', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Completadas</p>
-          </div>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '32px', fontWeight: '600', color: '#B8C0CC', margin: 0 }}>{pendientes}</p>
+          <p style={{ fontSize: '10px', color: '#8A9BAD', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Pendientes</p>
         </div>
       </div>
 
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 56px' }}>
-
-        {/* Filtros */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          {btnFiltro('pendientes',  `Pendientes (${pendientes})`)}
-          {btnFiltro('completadas', `Completadas (${completadas})`)}
-          {btnFiltro('todas',       'Todas')}
-        </div>
 
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
