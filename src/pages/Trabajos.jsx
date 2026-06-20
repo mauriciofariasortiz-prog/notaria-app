@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
-import { Users, Briefcase } from 'lucide-react'
+import { Users, Briefcase, Bell, Calendar, Download, LogOut, Plus } from 'lucide-react'
 import Spinner from '../components/Spinner'
 
 function initiales(nombre = '') {
@@ -161,8 +161,39 @@ function diasSinMovimiento(ultima_actividad) {
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
+/* ── Estilos compartidos para botones del navbar ── */
+const NAV_BTN = {
+  height: '34px',
+  padding: '0 13px',
+  borderRadius: '6px',
+  fontSize: '11px',
+  fontWeight: '600',
+  letterSpacing: '0.04em',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',
+  transition: 'background 0.15s, border-color 0.15s, color 0.15s, transform 0.12s',
+  whiteSpace: 'nowrap',
+}
+const NAV_BTN_SECONDARY = {
+  ...NAV_BTN,
+  background: 'rgba(255,255,255,0.06)',
+  border: '1px solid rgba(184,192,204,0.22)',
+  color: '#A8B8C8',
+}
+const NAV_BTN_PRIMARY = {
+  ...NAV_BTN,
+  background: '#B8C0CC',
+  border: '1px solid transparent',
+  color: '#1E3A5F',
+  fontWeight: '700',
+  letterSpacing: '0.06em',
+}
+
 function BellButton({ trabajosStale, onVerTrabajo }) {
   const [open, setOpen] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const ref = useRef(null)
   const count = trabajosStale.length
 
@@ -172,34 +203,55 @@ function BellButton({ trabajosStale, onVerTrabajo }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  const active = open || count > 0
+
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        style={{ position: 'relative', background: open ? 'rgba(184,192,204,0.2)' : 'transparent', border: `1px solid ${open ? 'rgba(184,192,204,0.5)' : 'rgba(138,155,173,0.35)'}`, borderRadius: '5px', color: count > 0 ? '#B8C0CC' : '#8A9BAD', fontSize: '16px', padding: '5px 10px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '4px' }}
-        onMouseEnter={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(184,192,204,0.5)'; e.currentTarget.style.color = '#B8C0CC' } }}
-        onMouseLeave={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = count > 0 ? '#B8C0CC' : '#8A9BAD' } }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         title="Trabajos sin movimiento"
+        style={{
+          ...NAV_BTN_SECONDARY,
+          background: open ? 'rgba(255,255,255,0.12)' : hovered ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)',
+          borderColor: open || hovered ? 'rgba(184,192,204,0.45)' : 'rgba(184,192,204,0.22)',
+          color: active ? '#D0D8E4' : '#A8B8C8',
+          position: 'relative',
+        }}
       >
-        🔔
+        <Bell size={14} strokeWidth={2} />
         {count > 0 && (
-          <span style={{ background: '#e05252', color: '#fff', borderRadius: '99px', fontSize: '10px', fontWeight: '700', padding: '1px 6px', minWidth: '18px', textAlign: 'center', lineHeight: '16px' }}>
+          <span style={{
+            background: '#e05252',
+            color: '#fff',
+            borderRadius: '99px',
+            fontSize: '9px',
+            fontWeight: '700',
+            padding: '0 5px',
+            height: '15px',
+            minWidth: '15px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: 1,
+          }}>
             {count}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="anim-slide-down" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: '#fff', borderRadius: '8px', boxShadow: '0 12px 40px rgba(44,82,130,0.22)', border: '1px solid #e5e7eb', zIndex: 200, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', background: '#fafbfc' }}>
+        <div className="anim-slide-down" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: '#fff', borderRadius: '10px', boxShadow: '0 12px 40px rgba(44,82,130,0.22)', border: '1px solid #e5e7eb', zIndex: 200, overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', background: '#fafbfc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Bell size={12} strokeWidth={2.5} style={{ color: '#2C5282', flexShrink: 0 }} />
             <p style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#2C5282' }}>
               Sin movimiento · +3 días
             </p>
-            {count === 0 && (
-              <p style={{ fontSize: '12px', color: '#8A9BAD', marginTop: '4px' }}>Todos los trabajos están al día ✓</p>
-            )}
           </div>
-          {count > 0 && (
+          {count === 0 ? (
+            <div style={{ padding: '16px', fontSize: '12px', color: '#8A9BAD', textAlign: 'center' }}>Todos los trabajos están al día ✓</div>
+          ) : (
             <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
               {trabajosStale.map(t => {
                 const dias = diasSinMovimiento(t.ultima_actividad)
@@ -398,46 +450,68 @@ export default function Trabajos() {
           </div>
           <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Notaría Pública 120 · Monterrey</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {userName && <span style={{ fontSize: '12px', fontWeight: '500', color: '#8A9BAD' }}>{userName}</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {userName && (
+            <span style={{ fontSize: '11px', fontWeight: '500', color: 'rgba(168,184,200,0.7)', marginRight: '4px', letterSpacing: '0.02em' }}>
+              {userName}
+            </span>
+          )}
 
           {/* Campana */}
           <BellButton trabajosStale={trabajosStale} onVerTrabajo={id => navigate(`/trabajos/${id}`)} />
+
+          {/* Divisor */}
+          <div style={{ width: '1px', height: '20px', background: 'rgba(184,192,204,0.2)', margin: '0 2px' }} />
 
           {/* Respaldo — solo admin */}
           {userEmail === ADMIN_EMAIL && (
             <button
               onClick={descargarRespaldo}
               disabled={descargando}
-              style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: descargando ? 'wait' : 'pointer', transition: 'border-color 0.15s, color 0.15s', display: 'flex', alignItems: 'center', gap: '5px' }}
-              onMouseEnter={e => { if (!descargando) { e.currentTarget.style.borderColor = '#B8C0CC'; e.currentTarget.style.color = '#B8C0CC' } }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
               title="Descargar respaldo Excel de todos los datos"
+              style={{ ...NAV_BTN_SECONDARY, cursor: descargando ? 'wait' : 'pointer', opacity: descargando ? 0.6 : 1 }}
+              onMouseEnter={e => { if (!descargando) { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(184,192,204,0.45)'; e.currentTarget.style.color = '#D0D8E4' } }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(184,192,204,0.22)'; e.currentTarget.style.color = '#A8B8C8' }}
             >
-              {descargando ? '⏳ Generando...' : '⬇ Respaldo'}
+              <Download size={13} strokeWidth={2} />
+              {descargando ? 'Generando...' : 'Respaldo'}
             </button>
           )}
 
           {/* Calendario */}
           <button
             onClick={() => navigate('/calendario')}
-            style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#B8C0CC'; e.currentTarget.style.color = '#B8C0CC' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
-          >📅 Calendario</button>
+            style={NAV_BTN_SECONDARY}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.borderColor = 'rgba(184,192,204,0.45)'; e.currentTarget.style.color = '#D0D8E4' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(184,192,204,0.22)'; e.currentTarget.style.color = '#A8B8C8' }}
+          >
+            <Calendar size={13} strokeWidth={2} />
+            Calendario
+          </button>
 
+          {/* Nuevo trabajo — acción principal */}
           <button
             onClick={() => navigate('/trabajos/nuevo')}
-            style={{ background: '#B8C0CC', border: 'none', borderRadius: '5px', color: '#2C5282', fontSize: '11px', fontWeight: '700', padding: '6px 14px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s, transform 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#A8B2BE'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+            style={NAV_BTN_PRIMARY}
+            onMouseEnter={e => { e.currentTarget.style.background = '#CDD3DA'; e.currentTarget.style.transform = 'translateY(-1px)' }}
             onMouseLeave={e => { e.currentTarget.style.background = '#B8C0CC'; e.currentTarget.style.transform = 'translateY(0)' }}
-          >+ Nuevo trabajo</button>
+            onMouseDown={e => { e.currentTarget.style.transform = 'translateY(0) scale(0.97)' }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+          >
+            <Plus size={13} strokeWidth={2.5} />
+            Nuevo trabajo
+          </button>
+
+          {/* Salir */}
           <button
             onClick={cerrarSesion}
-            style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#B8C0CC'; e.currentTarget.style.color = '#B8C0CC' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
-          >Salir</button>
+            title="Cerrar sesión"
+            style={{ ...NAV_BTN_SECONDARY, padding: '0 10px' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(224,82,82,0.12)'; e.currentTarget.style.borderColor = 'rgba(224,82,82,0.35)'; e.currentTarget.style.color = '#f87171' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(184,192,204,0.22)'; e.currentTarget.style.color = '#A8B8C8' }}
+          >
+            <LogOut size={13} strokeWidth={2} />
+          </button>
         </div>
       </nav>
 
