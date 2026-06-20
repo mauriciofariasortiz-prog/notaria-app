@@ -34,8 +34,8 @@ const MESES  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto
 
 /* ── Colores por tipo ── */
 const TIPO_CFG = {
-  Firma: { bg: '#142845', border: '#1E3A5F', text: '#C5A96A', badge: 'rgba(197,169,106,0.15)', badgeText: '#C5A96A' },
-  Junta: { bg: '#C5A96A', border: '#B8965A', text: '#142845', badge: 'rgba(197,169,106,0.13)',  badgeText: '#B07D2A' },
+  Firma: { bg: '#2C5282', border: '#3A6298', text: '#B8C0CC', badge: 'rgba(184,192,204,0.15)', badgeText: '#B8C0CC' },
+  Junta: { bg: '#B8C0CC', border: '#A8B2BE', text: '#2C5282', badge: 'rgba(44,82,130,0.12)',   badgeText: '#2C5282' },
 }
 
 /* ── Parsear fecha_hora ISO → { fecha, hora } ── */
@@ -108,8 +108,8 @@ function EventoModal({ empleados, eventoEditar, onClose, onSave, onUpdate }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(20,40,69,0.6)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', animation: 'fadeIn 0.2s ease' }}>
-      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(20,40,69,0.3)', animation: 'fadeUp 0.25s cubic-bezier(0.22,1,0.36,1)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(44,82,130,0.6)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', animation: 'fadeIn 0.2s ease' }}>
+      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '480px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(44,82,130,0.3)', animation: 'fadeUp 0.25s cubic-bezier(0.22,1,0.36,1)' }}>
 
         {/* Header del modal */}
         <div style={{ background: 'var(--navy-dark)', padding: '1rem 1.4rem', borderBottom: '2px solid var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -117,11 +117,11 @@ function EventoModal({ empleados, eventoEditar, onClose, onSave, onUpdate }) {
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#fff' }}>
               {esEdicion ? 'Editar evento' : 'Nuevo evento'}
             </p>
-            <p style={{ fontSize: '11px', color: 'rgba(197,169,106,0.8)', marginTop: '1px' }}>
+            <p style={{ fontSize: '11px', color: 'rgba(184,192,204,0.8)', marginTop: '1px' }}>
               {esEdicion ? 'Modifica los datos del evento' : 'Agrega una firma o junta al calendario'}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', color: 'rgba(197,169,106,0.7)', cursor: 'pointer', padding: '2px 6px', lineHeight: 1 }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '22px', color: 'rgba(184,192,204,0.7)', cursor: 'pointer', padding: '2px 6px', lineHeight: 1 }}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -223,7 +223,7 @@ function EventoCard({ evento, onDelete, onEdit }) {
       onClick={() => onEdit(evento)}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '8px', padding: '14px 16px', position: 'relative', transition: 'transform 0.15s, box-shadow 0.15s', transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? '0 6px 18px rgba(20,40,69,0.25)' : '0 1px 4px rgba(20,40,69,0.1)', cursor: 'pointer' }}
+      style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: '8px', padding: '14px 16px', position: 'relative', transition: 'transform 0.15s, box-shadow 0.15s', transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? '0 6px 18px rgba(44,82,130,0.25)' : '0 1px 4px rgba(44,82,130,0.1)', cursor: 'pointer' }}
     >
       {/* Hora + tipo badge */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -353,7 +353,7 @@ export default function Calendario() {
           {Object.entries(TIPO_CFG).map(([tipo, cfg]) => (
             <div key={tipo} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: cfg.bg, border: `1px solid ${cfg.border}` }} />
-              <span style={{ fontSize: '10px', color: 'rgba(197,169,106,0.8)', fontWeight: '500' }}>{tipo}</span>
+              <span style={{ fontSize: '10px', color: 'rgba(184,192,204,0.8)', fontWeight: '500' }}>{tipo}</span>
             </div>
           ))}
         </div>
@@ -361,19 +361,19 @@ export default function Calendario() {
         {/* Navegación semana */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <button onClick={() => setSemana(d => addDays(d, -7))}
-            style={{ background: 'rgba(197,169,106,0.15)', border: '1px solid rgba(197,169,106,0.35)', borderRadius: '4px', color: 'var(--gold)', fontSize: '14px', fontWeight: '600', padding: '5px 10px', cursor: 'pointer', transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(197,169,106,0.25)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(197,169,106,0.15)'}
+            style={{ background: 'rgba(184,192,204,0.15)', border: '1px solid rgba(184,192,204,0.35)', borderRadius: '4px', color: 'var(--gold)', fontSize: '14px', fontWeight: '600', padding: '5px 10px', cursor: 'pointer', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(184,192,204,0.25)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(184,192,204,0.15)'}
           >‹</button>
           <button onClick={() => setSemana(inicioSemana(new Date()))}
-            style={{ background: 'rgba(197,169,106,0.15)', border: '1px solid rgba(197,169,106,0.35)', borderRadius: '4px', color: 'var(--gold)', fontSize: '11px', fontWeight: '600', padding: '5px 10px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(197,169,106,0.25)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(197,169,106,0.15)'}
+            style={{ background: 'rgba(184,192,204,0.15)', border: '1px solid rgba(184,192,204,0.35)', borderRadius: '4px', color: 'var(--gold)', fontSize: '11px', fontWeight: '600', padding: '5px 10px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(184,192,204,0.25)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(184,192,204,0.15)'}
           >Hoy</button>
           <button onClick={() => setSemana(d => addDays(d, 7))}
-            style={{ background: 'rgba(197,169,106,0.15)', border: '1px solid rgba(197,169,106,0.35)', borderRadius: '4px', color: 'var(--gold)', fontSize: '14px', fontWeight: '600', padding: '5px 10px', cursor: 'pointer', transition: 'background 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(197,169,106,0.25)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(197,169,106,0.15)'}
+            style={{ background: 'rgba(184,192,204,0.15)', border: '1px solid rgba(184,192,204,0.35)', borderRadius: '4px', color: 'var(--gold)', fontSize: '14px', fontWeight: '600', padding: '5px 10px', cursor: 'pointer', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(184,192,204,0.25)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(184,192,204,0.15)'}
           >›</button>
         </div>
 
@@ -386,8 +386,8 @@ export default function Calendario() {
       </header>
 
       {/* Sub-header con rango */}
-      <div style={{ background: 'var(--navy)', borderBottom: '1px solid rgba(197,169,106,0.2)', padding: '10px 1.75rem' }}>
-        <span style={{ fontSize: '12px', fontWeight: '500', color: 'rgba(197,169,106,0.8)', letterSpacing: '0.06em' }}>
+      <div style={{ background: 'var(--navy)', borderBottom: '1px solid rgba(184,192,204,0.2)', padding: '10px 1.75rem' }}>
+        <span style={{ fontSize: '12px', fontWeight: '500', color: 'rgba(184,192,204,0.8)', letterSpacing: '0.06em' }}>
           Semana del {rango}
         </span>
       </div>
@@ -407,18 +407,18 @@ export default function Calendario() {
                 <div key={nombre} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
 
                   {/* Encabezado día */}
-                  <div style={{ textAlign: 'center', padding: '8px 6px', borderRadius: '6px', background: hoyFlag ? 'var(--gold)' : 'var(--card)', border: `1px solid ${hoyFlag ? 'var(--gold)' : 'var(--border)'}`, boxShadow: hoyFlag ? '0 2px 8px rgba(197,169,106,0.3)' : 'var(--shadow-sm)' }}>
+                  <div style={{ textAlign: 'center', padding: '8px 6px', borderRadius: '6px', background: hoyFlag ? 'var(--gold)' : 'var(--card)', border: `1px solid ${hoyFlag ? 'var(--gold)' : 'var(--border)'}`, boxShadow: hoyFlag ? '0 2px 8px rgba(184,192,204,0.3)' : 'var(--shadow-sm)' }}>
                     <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: hoyFlag ? 'var(--navy-dark)' : 'var(--text-light)', marginBottom: '2px' }}>{nombre}</p>
                     <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '22px', fontWeight: '600', color: 'var(--navy-dark)', lineHeight: 1 }}>{fecha.getDate()}</p>
-                    <p style={{ fontSize: '10px', color: hoyFlag ? 'rgba(20,40,69,0.6)' : 'var(--text-light)' }}>{MESES[fecha.getMonth()]}</p>
+                    <p style={{ fontSize: '10px', color: hoyFlag ? 'rgba(44,82,130,0.6)' : 'var(--text-light)' }}>{MESES[fecha.getMonth()]}</p>
                   </div>
 
                   {/* Botón rápido agregar en ese día */}
                   <button
                     onClick={() => { setEventoEditar(null); setModalOpen(true) }}
-                    style={{ background: 'none', border: '1px dashed rgba(197,169,106,0.3)', borderRadius: '4px', color: 'rgba(197,169,106,0.5)', fontSize: '16px', padding: '3px', cursor: 'pointer', transition: 'all 0.15s', lineHeight: 1 }}
+                    style={{ background: 'none', border: '1px dashed rgba(184,192,204,0.3)', borderRadius: '4px', color: 'rgba(184,192,204,0.5)', fontSize: '16px', padding: '3px', cursor: 'pointer', transition: 'all 0.15s', lineHeight: 1 }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)' }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(197,169,106,0.3)'; e.currentTarget.style.color = 'rgba(197,169,106,0.5)' }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(184,192,204,0.3)'; e.currentTarget.style.color = 'rgba(184,192,204,0.5)' }}
                     title="Agregar evento"
                   >+</button>
 

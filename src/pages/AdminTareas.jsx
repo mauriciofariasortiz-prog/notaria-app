@@ -40,7 +40,7 @@ function SeccionComentarios({ tareaId }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
         {comentarios.map(c => (
           <div key={c.id} style={{ background: '#f7f8fa', borderRadius: '6px', padding: '8px 12px' }}>
-            <p style={{ fontSize: '12px', color: '#142845', marginBottom: '2px' }}>{c.texto}</p>
+            <p style={{ fontSize: '12px', color: '#2C5282', marginBottom: '2px' }}>{c.texto}</p>
             <p style={{ fontSize: '10px', color: '#8A9BAD' }}>{c.autor || 'Anónimo'} · {fmt(c.created_at)}</p>
           </div>
         ))}
@@ -56,7 +56,7 @@ function SeccionComentarios({ tareaId }) {
         <button
           onClick={agregar}
           disabled={guardando || !texto.trim()}
-          style={{ background: '#142845', color: '#C5A96A', border: 'none', borderRadius: '5px', padding: '7px 14px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
+          style={{ background: '#2C5282', color: '#B8C0CC', border: 'none', borderRadius: '5px', padding: '7px 14px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
         >Enviar</button>
       </div>
     </div>
@@ -72,12 +72,12 @@ function TareaCard({ tarea, onToggle, onEliminar }) {
     <div
       style={{
         background: '#fff',
-        border: `1px solid ${hovered ? '#C5A96A' : '#e5e7eb'}`,
-        borderLeft: `3px solid ${tarea.completado ? '#2d7a4f' : '#C5A96A'}`,
+        border: `1px solid ${hovered ? '#B8C0CC' : '#e5e7eb'}`,
+        borderLeft: `3px solid ${tarea.completado ? '#2d7a4f' : '#B8C0CC'}`,
         borderRadius: '8px',
         padding: '14px 16px',
         transition: 'border-color 0.18s, box-shadow 0.18s',
-        boxShadow: hovered ? '0 4px 16px rgba(30,58,95,0.1)' : '0 1px 4px rgba(0,0,0,0.05)',
+        boxShadow: hovered ? '0 4px 16px rgba(44,82,130,0.1)' : '0 1px 4px rgba(0,0,0,0.05)',
         opacity: tarea.completado ? 0.72 : 1,
       }}
       onMouseEnter={() => setHovered(true)}
@@ -90,7 +90,7 @@ function TareaCard({ tarea, onToggle, onEliminar }) {
           title={tarea.completado ? 'Marcar como pendiente' : 'Marcar como completada'}
           style={{
             width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
-            border: `2px solid ${tarea.completado ? '#2d7a4f' : '#C5A96A'}`,
+            border: `2px solid ${tarea.completado ? '#2d7a4f' : '#B8C0CC'}`,
             background: tarea.completado ? '#2d7a4f' : 'transparent',
             color: '#fff', fontSize: '12px', fontWeight: '700',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -102,7 +102,7 @@ function TareaCard({ tarea, onToggle, onEliminar }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{
             fontFamily: "'Cormorant Garamond', serif",
-            fontSize: '17px', fontWeight: '500', color: '#142845',
+            fontSize: '17px', fontWeight: '500', color: '#2C5282',
             textDecoration: tarea.completado ? 'line-through' : 'none',
             marginBottom: '2px', lineHeight: 1.3,
             transition: 'text-decoration 0.2s',
@@ -153,16 +153,16 @@ function NuevaTareaModal({ onClose, onGuardar }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(20,40,69,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '460px', boxShadow: '0 24px 80px rgba(20,40,69,0.3)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(44,82,130,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '460px', boxShadow: '0 24px 80px rgba(44,82,130,0.3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.4rem', borderBottom: '1px solid #f0f0f0' }}>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#142845' }}>Nueva tarea</span>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#2C5282' }}>Nueva tarea</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', color: '#8A9BAD', cursor: 'pointer' }}>×</button>
         </div>
         <form onSubmit={handleSubmit} style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <label style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A9BAD' }}>
-              Título <span style={{ color: '#C5A96A' }}>*</span>
+              Título <span style={{ color: '#B8C0CC' }}>*</span>
             </label>
             <input
               value={titulo}
@@ -236,9 +236,9 @@ export default function AdminTareas() {
     <button
       onClick={() => setFiltro(val)}
       style={{
-        background: filtro === val ? '#142845' : 'transparent',
-        color: filtro === val ? '#C5A96A' : '#8A9BAD',
-        border: `1px solid ${filtro === val ? '#142845' : '#e5e7eb'}`,
+        background: filtro === val ? '#2C5282' : 'transparent',
+        color: filtro === val ? '#B8C0CC' : '#8A9BAD',
+        border: `1px solid ${filtro === val ? '#2C5282' : '#e5e7eb'}`,
         borderRadius: '99px', padding: '5px 14px', fontSize: '11px', fontWeight: '600',
         cursor: 'pointer', transition: 'all 0.15s',
       }}
@@ -249,32 +249,32 @@ export default function AdminTareas() {
     <div style={{ minHeight: '100vh', background: '#f7f8fa', fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* Navbar */}
-      <nav style={{ background: '#142845', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
+      <nav style={{ background: '#2C5282', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button
             onClick={() => navigate('/trabajos')}
-            style={{ background: 'transparent', border: 'none', color: '#C5A96A', fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '0 4px', transition: 'transform 0.15s' }}
+            style={{ background: 'transparent', border: 'none', color: '#B8C0CC', fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '0 4px', transition: 'transform 0.15s' }}
             onMouseEnter={e => e.currentTarget.style.transform = 'translateX(-3px)'}
             onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
           >←</button>
-          <div style={{ width: '32px', height: '32px', border: '1.5px solid #C5A96A', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '14px', fontWeight: '600', color: '#C5A96A' }}>GM</span>
+          <div style={{ width: '32px', height: '32px', border: '1.5px solid #B8C0CC', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '14px', fontWeight: '600', color: '#B8C0CC' }}>GM</span>
           </div>
           <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Gabriela Muñoz</span>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          style={{ background: '#C5A96A', border: 'none', borderRadius: '5px', color: '#142845', fontSize: '11px', fontWeight: '700', padding: '6px 14px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s' }}
-          onMouseEnter={e => e.currentTarget.style.background = '#B8965A'}
-          onMouseLeave={e => e.currentTarget.style.background = '#C5A96A'}
+          style={{ background: '#B8C0CC', border: 'none', borderRadius: '5px', color: '#2C5282', fontSize: '11px', fontWeight: '700', padding: '6px 14px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.background = '#A8B2BE'}
+          onMouseLeave={e => e.currentTarget.style.background = '#B8C0CC'}
         >+ Nueva tarea</button>
       </nav>
 
       {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #142845 100%)', padding: '40px 28px 44px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid rgba(197,169,106,0.45)', borderRadius: '99px', padding: '5px 16px', marginBottom: '18px' }}>
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#C5A96A' }} />
-          <span style={{ fontSize: '10px', fontWeight: '600', color: '#C5A96A', letterSpacing: '0.18em', textTransform: 'uppercase' }}>Administración</span>
+      <div style={{ background: 'linear-gradient(135deg, #3A6298 0%, #2C5282 100%)', padding: '40px 28px 44px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid rgba(184,192,204,0.45)', borderRadius: '99px', padding: '5px 16px', marginBottom: '18px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#B8C0CC' }} />
+          <span style={{ fontSize: '10px', fontWeight: '600', color: '#B8C0CC', letterSpacing: '0.18em', textTransform: 'uppercase' }}>Administración</span>
         </div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '38px', fontWeight: '600', color: '#fff', margin: '0 0 8px', lineHeight: 1.1 }}>
           Gabriela Muñoz
@@ -282,10 +282,10 @@ export default function AdminTareas() {
         <p style={{ fontSize: '13px', color: '#8A9BAD', margin: '0 0 24px' }}>Tareas y recordatorios</p>
         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '32px', fontWeight: '600', color: '#C5A96A', margin: 0 }}>{pendientes}</p>
+            <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '32px', fontWeight: '600', color: '#B8C0CC', margin: 0 }}>{pendientes}</p>
             <p style={{ fontSize: '10px', color: '#8A9BAD', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Pendientes</p>
           </div>
-          <div style={{ width: '1px', background: 'rgba(197,169,106,0.25)' }} />
+          <div style={{ width: '1px', background: 'rgba(184,192,204,0.25)' }} />
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '32px', fontWeight: '600', color: '#2d7a4f', margin: 0 }}>{completadas}</p>
             <p style={{ fontSize: '10px', color: '#8A9BAD', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Completadas</p>

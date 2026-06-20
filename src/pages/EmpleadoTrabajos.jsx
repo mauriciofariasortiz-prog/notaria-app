@@ -32,7 +32,7 @@ function fechaLimiteBadge(fecha_limite) {
     color = '#c0392b'; bg = 'rgba(192,57,43,0.09)'; border = 'rgba(192,57,43,0.3)'
     texto = `Vencida hace ${Math.abs(diff)} día${Math.abs(diff) !== 1 ? 's' : ''}`
   } else if (diff <= 3) {
-    color = '#B07D2A'; bg = 'rgba(197,169,106,0.15)'; border = 'rgba(197,169,106,0.45)'
+    color = '#B07D2A'; bg = 'rgba(184,192,204,0.15)'; border = 'rgba(184,192,204,0.45)'
     texto = diff === 0 ? 'Vence hoy' : `Vence en ${diff} día${diff !== 1 ? 's' : ''}`
   } else {
     color = '#2d7a4f'; bg = 'rgba(45,122,79,0.09)'; border = 'rgba(45,122,79,0.25)'
@@ -102,7 +102,7 @@ function TrabajoCard({ t, onClick, isDragging, isDragOver }) {
         {esCompleto ? (
           <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', background: 'rgba(45,122,79,0.09)', color: '#2d7a4f', border: '1px solid rgba(45,122,79,0.22)', flexShrink: 0, marginTop: '2px' }}>Completado</span>
         ) : (
-          <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', background: 'rgba(197,169,106,0.13)', color: '#B07D2A', border: '1px solid rgba(197,169,106,0.38)', flexShrink: 0, marginTop: '2px' }}>En proceso</span>
+          <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', background: 'rgba(184,192,204,0.13)', color: '#B07D2A', border: '1px solid rgba(184,192,204,0.38)', flexShrink: 0, marginTop: '2px' }}>En proceso</span>
         )}
       </div>
     </div>
@@ -269,7 +269,7 @@ export default function EmpleadoTrabajos() {
 
         {!loading && empleado && (
           <>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#1E3A5F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: '600', color: '#C5A96A', flexShrink: 0 }}>
+            <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#3A6298', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: '600', color: '#B8C0CC', flexShrink: 0 }}>
               {initiales(empleado.nombre)}
             </div>
             <div>
@@ -290,7 +290,7 @@ export default function EmpleadoTrabajos() {
         {!loading && (
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem 1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: 'var(--shadow-sm)' }}>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'rgba(197,169,106,0.8)', pointerEvents: 'none', lineHeight: 1 }}>🔍</span>
+              <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px', color: 'rgba(184,192,204,0.8)', pointerEvents: 'none', lineHeight: 1 }}>🔍</span>
               <input
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}

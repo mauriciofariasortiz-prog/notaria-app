@@ -11,7 +11,7 @@ function initiales(nombre = '') {
   return last.length <= 3 ? first + last : first + last[0]
 }
 
-const NAV_COLORS = ['#1E3A5F', '#1a3360', '#254870', '#2d4a7a', '#163050']
+const NAV_COLORS = ['#2C5282', '#1F4073', '#3A6298', '#243F6A', '#4A72B8']
 
 function AbogadoCard({ emp, onClick, big = false }) {
   const [hovered, setHovered] = useState(false)
@@ -25,8 +25,8 @@ function AbogadoCard({ emp, onClick, big = false }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: '#ffffff',
-        border: `1px solid ${hovered ? '#1E3A5F' : '#e5e7eb'}`,
-        borderTop: `3px solid ${hovered ? '#C5A96A' : 'transparent'}`,
+        border: `1px solid ${hovered ? '#3A6298' : '#e5e7eb'}`,
+        borderTop: `3px solid ${hovered ? '#B8C0CC' : 'transparent'}`,
         borderRadius: '14px',
         padding: big ? '36px 20px 30px' : '22px 14px 20px',
         cursor: 'pointer',
@@ -35,7 +35,7 @@ function AbogadoCard({ emp, onClick, big = false }) {
         textAlign: 'center',
         width: '100%', height: '100%',
         transition: 'border-color 0.18s, box-shadow 0.18s, transform 0.18s',
-        boxShadow: hovered ? '0 6px 24px rgba(30,58,95,0.13)' : '0 1px 4px rgba(0,0,0,0.06)',
+        boxShadow: hovered ? '0 6px 24px rgba(44,82,130,0.13)' : '0 1px 4px rgba(0,0,0,0.06)',
         transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
       }}
     >
@@ -44,9 +44,9 @@ function AbogadoCard({ emp, onClick, big = false }) {
         background: bg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Cormorant Garamond', serif",
-        fontSize: big ? 30 : 20, fontWeight: '600', color: '#C5A96A',
+        fontSize: big ? 30 : 20, fontWeight: '600', color: '#B8C0CC',
         flexShrink: 0,
-        boxShadow: '0 2px 10px rgba(20,40,69,0.2)',
+        boxShadow: '0 2px 10px rgba(44,82,130,0.2)',
       }}>
         {initiales(emp.nombre)}
       </div>
@@ -54,7 +54,7 @@ function AbogadoCard({ emp, onClick, big = false }) {
         <p style={{
           fontFamily: "'Cormorant Garamond', serif",
           fontSize: big ? 22 : 15, fontWeight: '500',
-          color: '#142845', margin: '0 0 5px', lineHeight: 1.2,
+          color: '#2C5282', margin: '0 0 5px', lineHeight: 1.2,
         }}>
           {emp.nombre}
         </p>
@@ -72,8 +72,8 @@ function AdminCard({ onClick }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: '#ffffff',
-        border: `1px solid ${hovered ? '#1E3A5F' : '#e5e7eb'}`,
-        borderTop: `3px solid ${hovered ? '#C5A96A' : 'transparent'}`,
+        border: `1px solid ${hovered ? '#3A6298' : '#e5e7eb'}`,
+        borderTop: `3px solid ${hovered ? '#B8C0CC' : 'transparent'}`,
         borderRadius: '14px',
         padding: '22px 14px 20px',
         cursor: 'pointer',
@@ -82,20 +82,20 @@ function AdminCard({ onClick }) {
         textAlign: 'center',
         width: '100%',
         transition: 'border-color 0.18s, box-shadow 0.18s, transform 0.18s',
-        boxShadow: hovered ? '0 6px 24px rgba(30,58,95,0.13)' : '0 1px 4px rgba(0,0,0,0.06)',
+        boxShadow: hovered ? '0 6px 24px rgba(44,82,130,0.13)' : '0 1px 4px rgba(0,0,0,0.06)',
         transform: hovered ? 'translateY(-3px)' : 'translateY(0)',
       }}
     >
       <div style={{
         width: 56, height: 56, borderRadius: '50%',
-        background: '#3a5a2a',
+        background: '#2C5282',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Cormorant Garamond', serif",
-        fontSize: 20, fontWeight: '600', color: '#C5A96A',
-        boxShadow: '0 2px 10px rgba(20,40,69,0.2)',
+        fontSize: 20, fontWeight: '600', color: '#B8C0CC',
+        boxShadow: '0 2px 10px rgba(44,82,130,0.2)',
       }}>GM</div>
       <div>
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: '500', color: '#142845', margin: '0 0 5px', lineHeight: 1.2 }}>
+        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: '500', color: '#2C5282', margin: '0 0 5px', lineHeight: 1.2 }}>
           Gabriela Muñoz
         </p>
         <p style={{ fontSize: 11, fontWeight: '500', color: '#8A9BAD', margin: 0 }}>Administración</p>
@@ -120,15 +120,15 @@ function ResultadoBusqueda({ trabajo, empNombre, onClick }) {
     <div
       onClick={onClick}
       style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px 16px', cursor: 'pointer', transition: 'box-shadow 0.15s, border-color 0.15s', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}
-      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(30,58,95,0.1)'; e.currentTarget.style.borderColor = '#C5A96A' }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(44,82,130,0.1)'; e.currentTarget.style.borderColor = '#B8C0CC' }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = '#e5e7eb' }}
     >
       <div>
-        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '16px', fontWeight: '500', color: '#142845', marginBottom: '3px' }}>
+        <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '16px', fontWeight: '500', color: '#2C5282', marginBottom: '3px' }}>
           {[trabajo.asunto, trabajo.cliente].filter(Boolean).join(' · ')}
         </p>
         {trabajo.numero_escritura && (
-          <p style={{ fontSize: '11px', color: '#C5A96A', fontWeight: '600', marginBottom: '2px' }}>Folio: {trabajo.numero_escritura}</p>
+          <p style={{ fontSize: '11px', color: '#B8C0CC', fontWeight: '600', marginBottom: '2px' }}>Folio: {trabajo.numero_escritura}</p>
         )}
         <p style={{ fontSize: '11px', color: '#8A9BAD' }}>
           {empNombre} · Ingreso: {trabajo.fecha_ingreso ? new Date(trabajo.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-MX') : '—'}
@@ -137,7 +137,7 @@ function ResultadoBusqueda({ trabajo, empNombre, onClick }) {
       <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', flexShrink: 0, marginTop: '2px',
         ...(trabajo.status === 'completado'
           ? { background: 'rgba(45,122,79,0.09)', color: '#2d7a4f', border: '1px solid rgba(45,122,79,0.22)' }
-          : { background: 'rgba(197,169,106,0.13)', color: '#B07D2A', border: '1px solid rgba(197,169,106,0.38)' })
+          : { background: 'rgba(44,82,130,0.08)', color: '#3A6298', border: '1px solid rgba(44,82,130,0.22)' })
       }}>
         {trabajo.status === 'completado' ? 'Completado' : 'En proceso'}
       </span>
@@ -167,9 +167,9 @@ function BellButton({ trabajosStale, onVerTrabajo }) {
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(o => !o)}
-        style={{ position: 'relative', background: open ? 'rgba(197,169,106,0.2)' : 'transparent', border: `1px solid ${open ? 'rgba(197,169,106,0.5)' : 'rgba(138,155,173,0.35)'}`, borderRadius: '5px', color: count > 0 ? '#C5A96A' : '#8A9BAD', fontSize: '16px', padding: '5px 10px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '4px' }}
-        onMouseEnter={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(197,169,106,0.5)'; e.currentTarget.style.color = '#C5A96A' } }}
-        onMouseLeave={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = count > 0 ? '#C5A96A' : '#8A9BAD' } }}
+        style={{ position: 'relative', background: open ? 'rgba(184,192,204,0.2)' : 'transparent', border: `1px solid ${open ? 'rgba(184,192,204,0.5)' : 'rgba(138,155,173,0.35)'}`, borderRadius: '5px', color: count > 0 ? '#B8C0CC' : '#8A9BAD', fontSize: '16px', padding: '5px 10px', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '4px' }}
+        onMouseEnter={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(184,192,204,0.5)'; e.currentTarget.style.color = '#B8C0CC' } }}
+        onMouseLeave={e => { if (!open) { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = count > 0 ? '#B8C0CC' : '#8A9BAD' } }}
         title="Trabajos sin movimiento"
       >
         🔔
@@ -181,9 +181,9 @@ function BellButton({ trabajosStale, onVerTrabajo }) {
       </button>
 
       {open && (
-        <div className="anim-slide-down" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: '#fff', borderRadius: '8px', boxShadow: '0 12px 40px rgba(20,40,69,0.22)', border: '1px solid #e5e7eb', zIndex: 200, overflow: 'hidden' }}>
+        <div className="anim-slide-down" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '320px', background: '#fff', borderRadius: '8px', boxShadow: '0 12px 40px rgba(44,82,130,0.22)', border: '1px solid #e5e7eb', zIndex: 200, overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', background: '#fafbfc' }}>
-            <p style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#142845' }}>
+            <p style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#2C5282' }}>
               Sin movimiento · +3 días
             </p>
             {count === 0 && (
@@ -202,7 +202,7 @@ function BellButton({ trabajosStale, onVerTrabajo }) {
                     onMouseEnter={e => e.currentTarget.style.background = '#f7f8fa'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
-                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '14px', fontWeight: '500', color: '#142845', marginBottom: '2px' }}>
+                    <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '14px', fontWeight: '500', color: '#2C5282', marginBottom: '2px' }}>
                       {[t.asunto, t.cliente].filter(Boolean).join(' · ')}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -382,10 +382,10 @@ export default function Trabajos() {
     <div style={{ minHeight: '100vh', background: '#f7f8fa', fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* NAVBAR */}
-      <nav style={{ background: '#142845', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
+      <nav style={{ background: '#2C5282', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '38px', height: '38px', border: '1.5px solid #C5A96A', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '17px', fontWeight: '600', color: '#C5A96A' }}>120</span>
+          <div style={{ width: '38px', height: '38px', border: '1.5px solid #B8C0CC', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '17px', fontWeight: '600', color: '#B8C0CC' }}>120</span>
           </div>
           <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Notaría Pública 120 · Monterrey</span>
         </div>
@@ -401,7 +401,7 @@ export default function Trabajos() {
               onClick={descargarRespaldo}
               disabled={descargando}
               style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: descargando ? 'wait' : 'pointer', transition: 'border-color 0.15s, color 0.15s', display: 'flex', alignItems: 'center', gap: '5px' }}
-              onMouseEnter={e => { if (!descargando) { e.currentTarget.style.borderColor = '#C5A96A'; e.currentTarget.style.color = '#C5A96A' } }}
+              onMouseEnter={e => { if (!descargando) { e.currentTarget.style.borderColor = '#B8C0CC'; e.currentTarget.style.color = '#B8C0CC' } }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
               title="Descargar respaldo Excel de todos los datos"
             >
@@ -413,30 +413,30 @@ export default function Trabajos() {
           <button
             onClick={() => navigate('/calendario')}
             style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C5A96A'; e.currentTarget.style.color = '#C5A96A' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#B8C0CC'; e.currentTarget.style.color = '#B8C0CC' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
           >📅 Calendario</button>
 
           <button
             onClick={() => navigate('/trabajos/nuevo')}
-            style={{ background: '#C5A96A', border: 'none', borderRadius: '5px', color: '#142845', fontSize: '11px', fontWeight: '700', padding: '6px 14px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s, transform 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#B8965A'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#C5A96A'; e.currentTarget.style.transform = 'translateY(0)' }}
+            style={{ background: '#B8C0CC', border: 'none', borderRadius: '5px', color: '#2C5282', fontSize: '11px', fontWeight: '700', padding: '6px 14px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s, transform 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#A8B2BE'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#B8C0CC'; e.currentTarget.style.transform = 'translateY(0)' }}
           >+ Nuevo trabajo</button>
           <button
             onClick={cerrarSesion}
             style={{ background: 'transparent', border: '1px solid rgba(138,155,173,0.35)', borderRadius: '5px', color: '#8A9BAD', fontSize: '11px', fontWeight: '500', padding: '5px 12px', cursor: 'pointer', transition: 'border-color 0.15s, color 0.15s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#C5A96A'; e.currentTarget.style.color = '#C5A96A' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#B8C0CC'; e.currentTarget.style.color = '#B8C0CC' }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(138,155,173,0.35)'; e.currentTarget.style.color = '#8A9BAD' }}
           >Salir</button>
         </div>
       </nav>
 
       {/* HERO */}
-      <div style={{ background: 'linear-gradient(135deg, #1E3A5F 0%, #142845 100%)', padding: '52px 28px 56px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid rgba(197,169,106,0.45)', borderRadius: '99px', padding: '5px 16px', marginBottom: '22px' }}>
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#C5A96A' }} />
-          <span style={{ fontSize: '10px', fontWeight: '600', color: '#C5A96A', letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sistema de gestión</span>
+      <div style={{ background: 'linear-gradient(135deg, #3A6298 0%, #2C5282 100%)', padding: '52px 28px 56px', textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid rgba(184,192,204,0.45)', borderRadius: '99px', padding: '5px 16px', marginBottom: '22px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#B8C0CC' }} />
+          <span style={{ fontSize: '10px', fontWeight: '600', color: '#B8C0CC', letterSpacing: '0.18em', textTransform: 'uppercase' }}>Sistema de gestión</span>
         </div>
         <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '46px', fontWeight: '600', color: '#ffffff', margin: '0 0 10px', lineHeight: 1.1 }}>
           Notaría Pública 120
@@ -445,12 +445,12 @@ export default function Trabajos() {
 
         {/* Barra de búsqueda global */}
         <div style={{ maxWidth: '520px', margin: '0 auto', position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: 'rgba(197,169,106,0.7)', pointerEvents: 'none' }}>🔍</span>
+          <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: 'rgba(184,192,204,0.7)', pointerEvents: 'none' }}>🔍</span>
           <input
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
             placeholder="Buscar en todos los trabajos — cliente, asunto o folio..."
-            style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(197,169,106,0.35)', borderRadius: '8px', padding: '12px 16px 12px 40px', fontSize: '13px', color: '#fff', outline: 'none', fontFamily: 'inherit', backdropFilter: 'blur(4px)' }}
+            style={{ width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(184,192,204,0.35)', borderRadius: '8px', padding: '12px 16px 12px 40px', fontSize: '13px', color: '#fff', outline: 'none', fontFamily: 'inherit', backdropFilter: 'blur(4px)' }}
           />
         </div>
       </div>

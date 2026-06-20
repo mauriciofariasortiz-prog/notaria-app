@@ -34,7 +34,7 @@ function fechaLimiteBadge(fecha_limite) {
     color = '#c0392b'; bg = 'rgba(192,57,43,0.09)'; border = 'rgba(192,57,43,0.3)'
     texto = `Vencida hace ${Math.abs(diff)} día${Math.abs(diff) !== 1 ? 's' : ''}`
   } else if (diff <= 3) {
-    color = '#B07D2A'; bg = 'rgba(197,169,106,0.15)'; border = 'rgba(197,169,106,0.45)'
+    color = '#B07D2A'; bg = 'rgba(184,192,204,0.15)'; border = 'rgba(184,192,204,0.45)'
     texto = diff === 0 ? 'Vence hoy' : `Vence en ${diff} día${diff !== 1 ? 's' : ''}`
   } else {
     color = '#2d7a4f'; bg = 'rgba(45,122,79,0.09)'; border = 'rgba(45,122,79,0.25)'
@@ -96,8 +96,8 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(20,40,69,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', animation: 'fadeIn 0.2s ease' }}>
-      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(20,40,69,0.3)', animation: 'fadeUp 0.25s cubic-bezier(0.22,1,0.36,1)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(44,82,130,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', animation: 'fadeIn 0.2s ease' }}>
+      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 24px 80px rgba(44,82,130,0.3)', animation: 'fadeUp 0.25s cubic-bezier(0.22,1,0.36,1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.1rem 1.4rem', borderBottom: '1px solid var(--border)' }}>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: 'var(--navy-dark)' }}>Editar trabajo</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-light)', cursor: 'pointer', padding: '2px 6px' }}>×</button>
@@ -191,7 +191,7 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 14px', borderRadius: '6px',
         border: `1px solid ${isDragOver ? 'var(--gold)' : cfg.border}`,
-        background: isDragging ? 'rgba(197,169,106,0.08)' : cfg.bg,
+        background: isDragging ? 'rgba(184,192,204,0.08)' : cfg.bg,
         cursor: 'grab',
         transition: 'border-color 0.3s ease, background 0.3s ease, opacity 0.15s, transform 0.15s',
         opacity: isDragging ? 0.5 : 1,
@@ -508,7 +508,7 @@ export default function DetalleTrabajo() {
 
   const statusMeta = completo
     ? { label: 'Completado', color: '#2d7a4f', bg: 'rgba(45,122,79,0.09)', border: 'rgba(45,122,79,0.22)' }
-    : { label: 'En proceso', color: '#B07D2A', bg: 'rgba(197,169,106,0.13)', border: 'rgba(197,169,106,0.38)' }
+    : { label: 'En proceso', color: '#B07D2A', bg: 'rgba(184,192,204,0.13)', border: 'rgba(184,192,204,0.38)' }
 
   return (
     <>
@@ -533,9 +533,9 @@ export default function DetalleTrabajo() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button onClick={() => setEditOpen(true)}
-              style={{ background: 'rgba(197,169,106,0.15)', border: '1px solid rgba(197,169,106,0.4)', borderRadius: '4px', color: '#C5A96A', fontSize: '11px', fontWeight: '600', letterSpacing: '0.06em', padding: '5px 12px', cursor: 'pointer', transition: 'background 0.15s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(197,169,106,0.25)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(197,169,106,0.15)'}
+              style={{ background: 'rgba(184,192,204,0.15)', border: '1px solid rgba(184,192,204,0.4)', borderRadius: '4px', color: '#B8C0CC', fontSize: '11px', fontWeight: '600', letterSpacing: '0.06em', padding: '5px 12px', cursor: 'pointer', transition: 'background 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(184,192,204,0.25)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(184,192,204,0.15)'}
             >Editar</button>
             <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', background: statusMeta.bg, color: statusMeta.color, border: `1px solid ${statusMeta.border}` }}>
               {statusMeta.label}
@@ -608,9 +608,9 @@ export default function DetalleTrabajo() {
                 </div>
               ) : (
                 <button onClick={() => setAddingPaso(true)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: '1px dashed rgba(197,169,106,0.45)', borderRadius: '6px', padding: '8px 14px', cursor: 'pointer', color: 'var(--gold)', fontSize: '12px', fontWeight: '600', width: '100%', justifyContent: 'center', transition: 'border-color 0.15s, background 0.15s' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: '1px dashed rgba(184,192,204,0.45)', borderRadius: '6px', padding: '8px 14px', cursor: 'pointer', color: 'var(--gold)', fontSize: '12px', fontWeight: '600', width: '100%', justifyContent: 'center', transition: 'border-color 0.15s, background 0.15s' }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-light)' }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(197,169,106,0.45)'; e.currentTarget.style.background = 'none' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(184,192,204,0.45)'; e.currentTarget.style.background = 'none' }}
                 >+ Agregar paso</button>
               )}
             </div>

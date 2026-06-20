@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom'
 
 const STATUS = {
   completado: { label: 'Completado', color: '#2d7a4f', bg: 'rgba(45,122,79,0.09)', border: 'rgba(45,122,79,0.22)' },
-  en_proceso: { label: 'En proceso', color: '#B07D2A', bg: 'rgba(197,169,106,0.13)', border: 'rgba(197,169,106,0.38)' },
-  nuevo:      { label: 'Nuevo',      color: '#1E3A5F', bg: 'rgba(30,58,95,0.08)',   border: 'rgba(30,58,95,0.22)'  },
+  en_proceso: { label: 'En proceso', color: '#B07D2A', bg: 'rgba(184,192,204,0.13)', border: 'rgba(184,192,204,0.38)' },
+  nuevo:      { label: 'Nuevo',      color: '#3A6298', bg: 'rgba(44,82,130,0.08)',   border: 'rgba(44,82,130,0.22)'  },
 }
 
 export default function MisTrabajos() {

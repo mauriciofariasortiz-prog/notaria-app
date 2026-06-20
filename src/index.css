@@ -1,28 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --navy-dark: #142845;
-  --navy: #1E3A5F;
-  --gold: #C5A96A;
-  --gold-dim: #B8965A;
-  --gold-light: rgba(197, 169, 106, 0.12);
-  --gold-border: rgba(197, 169, 106, 0.35);
+  --navy-dark: #2C5282;
+  --navy: #3A6298;
+  --gold: #B8C0CC;
+  --gold-dim: #A8B2BE;
+  --gold-light: rgba(184, 192, 204, 0.14);
+  --gold-border: rgba(184, 192, 204, 0.45);
   --silver: #B8C4D0;
   --silver-light: rgba(184, 196, 208, 0.15);
   --silver-border: rgba(184, 196, 208, 0.4);
   --bg: #EEF1F6;
   --card: #ffffff;
-  --text: #142845;
+  --text: #1a2e4a;
   --text-muted: #6B7A8D;
   --text-light: #9BA8B6;
   --border: rgba(184, 196, 208, 0.45);
   --green: #2d7a4f;
   --green-bg: rgba(45, 122, 79, 0.08);
   --amber: #B07D2A;
-  --amber-bg: rgba(197, 169, 106, 0.12);
-  --shadow-sm: 0 1px 3px rgba(20, 40, 69, 0.06), 0 1px 2px rgba(20, 40, 69, 0.04);
-  --shadow-md: 0 4px 16px rgba(20, 40, 69, 0.10), 0 2px 6px rgba(20, 40, 69, 0.06);
-  --shadow-lg: 0 12px 40px rgba(20, 40, 69, 0.16), 0 4px 12px rgba(20, 40, 69, 0.08);
+  --amber-bg: rgba(184, 192, 204, 0.14);
+  --shadow-sm: 0 1px 3px rgba(44, 82, 130, 0.07), 0 1px 2px rgba(44, 82, 130, 0.05);
+  --shadow-md: 0 4px 16px rgba(44, 82, 130, 0.12), 0 2px 6px rgba(44, 82, 130, 0.07);
+  --shadow-lg: 0 12px 40px rgba(44, 82, 130, 0.18), 0 4px 12px rgba(44, 82, 130, 0.10);
 
   font-family: 'Montserrat', system-ui, sans-serif;
   font-size: 14px;
@@ -53,7 +53,7 @@ button { cursor: pointer; font-family: 'Montserrat', sans-serif; }
 input, select, textarea { font-family: 'Montserrat', sans-serif; outline: none; }
 
 input:focus, select:focus, textarea:focus {
-  border-color: var(--gold) !important;
+  border-color: var(--navy-dark) !important;
   box-shadow: 0 0 0 3px var(--gold-light) !important;
 }
 
@@ -168,11 +168,11 @@ a { text-decoration: none; color: inherit; }
   text-transform: uppercase;
   cursor: pointer;
   transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
-  box-shadow: 0 2px 8px rgba(197, 169, 106, 0.3);
+  box-shadow: 0 2px 8px rgba(184, 192, 204, 0.35);
 }
 .btn-gold:hover {
   background: var(--gold-dim);
-  box-shadow: 0 4px 14px rgba(197, 169, 106, 0.4);
+  box-shadow: 0 4px 14px rgba(184, 192, 204, 0.5);
   transform: translateY(-1px);
 }
 .btn-gold:active { transform: translateY(0); }
@@ -232,7 +232,7 @@ a { text-decoration: none; color: inherit; }
   background: #ffffff;
 }
 .field-input:focus {
-  border-color: var(--gold) !important;
+  border-color: var(--navy-dark) !important;
   box-shadow: 0 0 0 3px var(--gold-light) !important;
   background: #ffffff;
 }
