@@ -444,10 +444,7 @@ export default function Trabajos() {
 
       {/* NAVBAR */}
       <nav style={{ background: '#2C5282', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '38px', height: '38px', border: '1.5px solid #B8C0CC', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '17px', fontWeight: '600', color: '#B8C0CC' }}>120</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Notaría Pública 120 · Monterrey</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
