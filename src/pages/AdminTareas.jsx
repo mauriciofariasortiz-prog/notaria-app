@@ -386,19 +386,25 @@ export default function AdminTareas() {
         ) : (
           /* ── Tab Pendientes ── */
           <div>
-            {!showForm ? (
-              <button onClick={() => setShowForm(true)}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: '1px dashed rgba(184,192,204,0.5)', borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', color: 'var(--gold)', fontSize: '12px', fontWeight: '600', width: '100%', justifyContent: 'center', transition: 'border-color 0.15s, background 0.15s', marginBottom: '16px' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-light)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(184,192,204,0.5)'; e.currentTarget.style.background = 'none' }}
-              >+ Agregar recordatorio</button>
-            ) : (
-              <form onSubmit={agregarPendiente} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem', marginBottom: '16px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <input autoFocus value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título del recordatorio..." required className="field-input" />
+            {!showForm && (
+              <button onClick={() => setShowForm(true)} className="btn-gold"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', padding: '11px 22px', fontSize: '12px' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+              >
+                <span style={{ fontSize: '16px', lineHeight: 1, fontWeight: '400' }}>+</span>
+                Nuevo pendiente
+              </button>
+            )}
+
+            {showForm && (
+              <form onSubmit={agregarPendiente} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem', marginBottom: '20px', boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: '500', color: 'var(--navy-dark)', margin: 0 }}>Nuevo pendiente</p>
+                <input autoFocus value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título..." required className="field-input" />
                 <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Descripción (opcional)..." rows={2} className="field-input" style={{ resize: 'vertical' }} />
                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                   <button type="button" onClick={() => { setShowForm(false); setTitulo(''); setDescripcion('') }} className="btn-ghost-dark">Cancelar</button>
-                  <button type="submit" disabled={guardando || !titulo.trim()} className="btn-gold" style={{ padding: '9px 20px' }}>Agregar</button>
+                  <button type="submit" disabled={guardando || !titulo.trim()} className="btn-gold" style={{ padding: '9px 22px' }}>Agregar</button>
                 </div>
               </form>
             )}
