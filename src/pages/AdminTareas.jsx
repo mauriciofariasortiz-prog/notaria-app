@@ -304,19 +304,27 @@ export default function AdminTareas() {
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#ffffff', lineHeight: 1.1 }}>Gabriela Muñoz</div>
           <div style={{ fontSize: '10px', color: 'var(--gold)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '2px' }}>Administración</div>
         </div>
-        {tab === 'trabajos' && (
-          <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto' }}>
+          {tab === 'pendientes' ? (
+            <button className="btn-gold"
+              onClick={() => setShowForm(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '7px' }}
+            >
+              <span style={{ fontSize: '16px', lineHeight: 1, fontWeight: '400' }}>+</span>
+              Nuevo pendiente
+            </button>
+          ) : (
             <button className="btn-gold"
               onClick={() => gabrielaId && navigate(`/trabajos/nuevo?empleado=${gabrielaId}&back=/admin/gabriela&asunto_fijo=Copia+Certificada`)}
             >+ Nuevo trabajo</button>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
       {/* Tabs */}
       <TabBar
         active={tab}
-        onChange={setTab}
+        onChange={t => { setTab(t); setShowForm(false) }}
         counts={{ trabajos: totalTrabajos, pendientes: pendientes.length }}
       />
 
@@ -386,17 +394,6 @@ export default function AdminTareas() {
         ) : (
           /* ── Tab Pendientes ── */
           <div>
-            {!showForm && (
-              <button onClick={() => setShowForm(true)} className="btn-gold"
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', padding: '11px 22px', fontSize: '12px' }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-              >
-                <span style={{ fontSize: '16px', lineHeight: 1, fontWeight: '400' }}>+</span>
-                Nuevo pendiente
-              </button>
-            )}
-
             {showForm && (
               <form onSubmit={agregarPendiente} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem', marginBottom: '20px', boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: '500', color: 'var(--navy-dark)', margin: 0 }}>Nuevo pendiente</p>

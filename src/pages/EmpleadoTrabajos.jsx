@@ -251,10 +251,9 @@ function PendienteCard({ p, onCompletar, autor }) {
 }
 
 /* ── Tab: Pendientes ── */
-function TabPendientes({ empleadoId, userNombre }) {
+function TabPendientes({ empleadoId, userNombre, showForm, setShowForm }) {
   const [pendientes, setPendientes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
   const [titulo, setTitulo] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [guardando, setGuardando] = useState(false)
@@ -285,20 +284,15 @@ function TabPendientes({ empleadoId, userNombre }) {
 
   return (
     <div>
-      {/* Botón agregar */}
-      {!showForm ? (
-        <button onClick={() => setShowForm(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: '1px dashed rgba(184,192,204,0.5)', borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', color: 'var(--gold)', fontSize: '12px', fontWeight: '600', width: '100%', justifyContent: 'center', transition: 'border-color 0.15s, background 0.15s', marginBottom: '16px' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-light)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(184,192,204,0.5)'; e.currentTarget.style.background = 'none' }}
-        >+ Agregar recordatorio</button>
-      ) : (
-        <form onSubmit={agregar} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem', marginBottom: '16px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <input autoFocus value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título del recordatorio..." required className="field-input" />
+      {/* Formulario inline */}
+      {showForm && (
+        <form onSubmit={agregar} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem', marginBottom: '20px', boxShadow: 'var(--shadow-md)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: '500', color: 'var(--navy-dark)', margin: 0 }}>Nuevo pendiente</p>
+          <input autoFocus value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título..." required className="field-input" />
           <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Descripción (opcional)..." rows={2} className="field-input" style={{ resize: 'vertical' }} />
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
             <button type="button" onClick={() => { setShowForm(false); setTitulo(''); setDescripcion('') }} className="btn-ghost-dark">Cancelar</button>
-            <button type="submit" disabled={guardando || !titulo.trim()} className="btn-gold" style={{ padding: '9px 20px' }}>Agregar</button>
+            <button type="submit" disabled={guardando || !titulo.trim()} className="btn-gold" style={{ padding: '9px 22px' }}>Agregar</button>
           </div>
         </form>
       )}
@@ -332,6 +326,7 @@ export default function EmpleadoTrabajos() {
   const [pendientesCount, setPendientesCount] = useState(0)
   const [descargando, setDescargando] = useState(false)
   const [limpiando,   setLimpiando]   = useState(false)
+  const [showPendienteForm, setShowPendienteForm] = useState(false)
 
   // Filtros — aplican solo en "En proceso"
   const [busqueda,         setBusqueda]         = useState('')
@@ -469,14 +464,24 @@ export default function EmpleadoTrabajos() {
           </>
         )}
         <div style={{ marginLeft: 'auto' }}>
-          <button className="btn-gold" onClick={() => navigate(`/trabajos/nuevo?empleado=${id}`)}>+ Nuevo trabajo</button>
+          {tab === 'pendientes' ? (
+            <button className="btn-gold"
+              onClick={() => setShowPendienteForm(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '7px' }}
+            >
+              <span style={{ fontSize: '16px', lineHeight: 1, fontWeight: '400' }}>+</span>
+              Nuevo pendiente
+            </button>
+          ) : (
+            <button className="btn-gold" onClick={() => navigate(`/trabajos/nuevo?empleado=${id}`)}>+ Nuevo trabajo</button>
+          )}
         </div>
       </header>
 
       {/* Tabs */}
       <TabBar
         active={tab}
-        onChange={setTab}
+        onChange={t => { setTab(t); setShowPendienteForm(false) }}
         counts={{ en_proceso: enProceso.length, completados: completados.length, pendientes: pendientesCount }}
       />
 
@@ -550,7 +555,7 @@ export default function EmpleadoTrabajos() {
           </>
 
         ) : (
-          <TabPendientes empleadoId={id} userNombre={userNombre} />
+          <TabPendientes empleadoId={id} userNombre={userNombre} showForm={showPendienteForm} setShowForm={setShowPendienteForm} />
         )}
       </main>
     </div>
