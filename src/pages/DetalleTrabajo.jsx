@@ -167,7 +167,7 @@ function EditModal({ trabajo, empleados, onClose, onSave }) {
 }
 
 /* ── Checklist Item ── */
-function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, onDragOver, onDrop, onDragEnd }) {
+function ChecklistItem({ item, onEstado, onEliminar, esAdmin, isDragging, isDragOver, onDragStart, onDragOver, onDrop, onDragEnd }) {
   const [animEstado, setAnimEstado] = useState(item.estado)
   const [flipping, setFlipping] = useState(false)
 
@@ -227,6 +227,15 @@ function ChecklistItem({ item, onEstado, isDragging, isDragOver, onDragStart, on
         color: cfg.color, marginLeft: '10px', flexShrink: 0,
         transition: 'color 0.3s ease',
       }}>{cfg.label}</span>
+      {esAdmin && (
+        <button
+          onClick={e => { e.stopPropagation(); onEliminar(item.id, item.paso) }}
+          title="Eliminar paso"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(184,196,208,0.5)', fontSize: '14px', lineHeight: 1, padding: '0 0 0 8px', flexShrink: 0, transition: 'color 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.color = '#e05252'}
+          onMouseLeave={e => e.currentTarget.style.color = 'rgba(184,196,208,0.5)'}
+        >×</button>
+      )}
     </div>
   )
 }
@@ -372,6 +381,7 @@ export default function DetalleTrabajo() {
   const [addingPaso,     setAddingPaso]     = useState(false)
   const [savingPaso,     setSavingPaso]     = useState(false)
   const [currentUser,    setCurrentUser]    = useState('')
+  const [userEmail,      setUserEmail]      = useState('')
   const [esMauricio,     setEsMauricio]     = useState(false)
   const [bitacoraKey,    setBitacoraKey]    = useState(0) // para re-render bitácora
 
@@ -396,6 +406,7 @@ export default function DetalleTrabajo() {
       const { data: emp } = await supabase.from('empleados').select('nombre').eq('user_id', user.id).single()
       const nombre = emp?.nombre || user.email?.split('@')[0] || 'Usuario'
       setCurrentUser(nombre)
+      setUserEmail(user.email || '')
       setEsMauricio(nombre === 'Mauricio FV')
     }
     setLoading(false)
@@ -459,6 +470,14 @@ export default function DetalleTrabajo() {
       await logAccion(`Agregó paso "${paso}"`)
     }
     setNuevoPaso(''); setAddingPaso(false); setSavingPaso(false)
+  }
+
+  /* ── Eliminar paso del checklist ── */
+  const eliminarPaso = async (pasoId, nombrePaso) => {
+    if (!window.confirm(`¿Eliminar el paso "${nombrePaso}"?`)) return
+    await supabase.from('checklist').delete().eq('id', pasoId)
+    setChecklist(prev => prev.filter(c => c.id !== pasoId))
+    await logAccion(`Eliminó paso "${nombrePaso}"`)
   }
 
   /* ── Eliminar trabajo ── */
@@ -591,6 +610,8 @@ export default function DetalleTrabajo() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {checklist.map(item => (
                 <ChecklistItem key={item.id} item={item} onEstado={cambiarEstado}
+                  esAdmin={userEmail === 'mauriciofariasortiz@gmail.com'}
+                  onEliminar={eliminarPaso}
                   isDragging={draggingId === item.id} isDragOver={dragOverId === item.id}
                   onDragStart={handleDragStart} onDragOver={handleDragOver}
                   onDrop={handleDrop} onDragEnd={handleDragEnd}
