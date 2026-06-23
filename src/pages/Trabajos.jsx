@@ -15,10 +15,14 @@ function initiales(nombre = '') {
 
 const NAV_COLORS = ['#2C5282', '#1F4073', '#3A6298', '#243F6A', '#4A72B8']
 
-function AbogadoCard({ emp, onClick, big = false }) {
+const NOTARIO_NOMBRE = 'Mauricio FV'
+
+function AbogadoCard({ emp, onClick }) {
   const [hovered, setHovered] = useState(false)
   const bg = NAV_COLORS[emp.nombre.charCodeAt(0) % NAV_COLORS.length]
-  const avatarSize = big ? 84 : 60
+  const esNotario = emp.nombre === NOTARIO_NOMBRE
+  const avatarSize = esNotario ? 80 : 58
+  const rol = esNotario ? 'Notario' : 'Abogado'
 
   return (
     <button
@@ -28,18 +32,18 @@ function AbogadoCard({ emp, onClick, big = false }) {
       style={{
         background: '#ffffff',
         border: `1px solid ${hovered ? 'rgba(44,82,130,0.3)' : 'rgba(184,196,208,0.35)'}`,
-        borderTop: `3px solid ${hovered ? '#2C5282' : 'transparent'}`,
+        borderTop: `3px solid ${hovered ? (esNotario ? 'var(--gold)' : '#2C5282') : 'transparent'}`,
         borderRadius: 'var(--radius-lg)',
-        padding: big ? '40px 24px 32px' : '26px 16px 22px',
+        padding: esNotario ? '36px 20px 28px' : '24px 14px 20px',
         cursor: 'pointer',
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: big ? '18px' : '13px',
+        gap: esNotario ? '16px' : '12px',
         textAlign: 'center',
         width: '100%', height: '100%',
         transition: 'border-color 0.22s, box-shadow 0.22s, transform 0.22s cubic-bezier(0.22,1,0.36,1)',
         boxShadow: hovered
           ? '0 8px 28px rgba(44,82,130,0.16)'
-          : '0 1px 4px rgba(44,82,130,0.06), 0 0 0 0 transparent',
+          : '0 1px 4px rgba(44,82,130,0.06)',
         transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
       }}
     >
@@ -48,7 +52,7 @@ function AbogadoCard({ emp, onClick, big = false }) {
         background: `linear-gradient(135deg, ${bg} 0%, ${bg}cc 100%)`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'Cormorant Garamond', serif",
-        fontSize: big ? 32 : 22, fontWeight: '600', color: '#B8C0CC',
+        fontSize: esNotario ? 30 : 20, fontWeight: '600', color: '#B8C0CC',
         flexShrink: 0,
         boxShadow: hovered
           ? '0 4px 16px rgba(44,82,130,0.35)'
@@ -60,11 +64,13 @@ function AbogadoCard({ emp, onClick, big = false }) {
       <div>
         <p style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: big ? 24 : 16, fontWeight: '500',
-          color: '#2C5282', margin: 0, lineHeight: 1.2,
-          transition: 'color 0.18s',
+          fontSize: esNotario ? 22 : 15, fontWeight: '500',
+          color: '#2C5282', margin: '0 0 4px', lineHeight: 1.2,
         }}>
           {emp.nombre}
+        </p>
+        <p style={{ fontSize: 10, fontWeight: '600', color: esNotario ? 'var(--gold)' : '#8A9BAD', letterSpacing: '0.08em', textTransform: 'uppercase', margin: 0 }}>
+          {rol}
         </p>
       </div>
     </button>
