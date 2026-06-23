@@ -1,304 +1,379 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate } from 'react-router-dom'
+import * as XLSX from 'xlsx'
+import Spinner from '../components/Spinner'
 
-/* ── Comentarios de una tarea ── */
-function SeccionComentarios({ tareaId }) {
+const ADMIN_EMAIL = 'mauriciofariasortiz@gmail.com'
+
+/* ── Tab bar ── */
+function TabBar({ active, onChange, counts }) {
+  const tabs = [
+    { key: 'en_proceso',  label: 'En proceso',  count: counts.en_proceso  },
+    { key: 'completados', label: 'Completados', count: counts.completados  },
+    { key: 'pendientes',  label: 'Pendientes',  count: counts.pendientes   },
+  ]
+  return (
+    <div style={{ background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)', padding: '0 1.75rem', display: 'flex' }}>
+      {tabs.map(t => (
+        <button key={t.key} onClick={() => onChange(t.key)} style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          padding: '13px 18px 11px',
+          fontSize: '11px', fontWeight: '600', letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: active === t.key ? '#ffffff' : 'rgba(184,192,204,0.55)',
+          borderBottom: active === t.key ? '2px solid var(--gold)' : '2px solid transparent',
+          marginBottom: '-2px', display: 'flex', alignItems: 'center', gap: '7px',
+          transition: 'color 0.15s',
+        }}>
+          {t.label}
+          {t.count > 0 && (
+            <span style={{ fontSize: '9px', fontWeight: '700', background: active === t.key ? 'rgba(184,192,204,0.25)' : 'rgba(184,192,204,0.12)', color: active === t.key ? '#B8C0CC' : 'rgba(184,192,204,0.5)', borderRadius: '99px', padding: '1px 6px', minWidth: '16px', textAlign: 'center' }}>{t.count}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/* ── TrabajoCard ── */
+function TrabajoCard({ t, onClick }) {
+  const prog = t.prog
+  const porcentaje = prog && prog.aplicables > 0 ? Math.round((prog.hechos / prog.aplicables) * 100) : null
+  const esCompleto = t.esCompleto
+  return (
+    <div className="work-card" onClick={onClick} style={{ cursor: 'pointer', opacity: esCompleto ? 0.8 : 1 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: '500', color: 'var(--navy-dark)', marginBottom: '4px', lineHeight: 1.2 }}>
+            {[t.asunto, t.cliente].filter(Boolean).join(' · ') || t.cliente}
+          </p>
+          {(t.numero_escritura || t.numero_instrumento) && (
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '4px' }}>
+              {t.numero_escritura   && <span style={{ fontSize: '11px', color: 'var(--gold)', fontWeight: '600' }}>Folio: {t.numero_escritura}</span>}
+              {t.numero_instrumento && <span style={{ fontSize: '11px', color: 'var(--gold)', fontWeight: '600' }}>Instrumento: {t.numero_instrumento}</span>}
+            </div>
+          )}
+          {prog && prog.total > 0 && (
+            <div style={{ marginBottom: '5px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
+                <div style={{ flex: 1, height: '4px', background: 'rgba(184,196,208,0.3)', borderRadius: '99px', overflow: 'hidden' }}>
+                  <div style={{ height: '4px', borderRadius: '99px', width: `${porcentaje}%`, background: esCompleto ? '#2d7a4f' : 'linear-gradient(90deg, var(--navy), var(--gold))' }} />
+                </div>
+                <span style={{ fontSize: '10px', fontWeight: '600', color: esCompleto ? '#2d7a4f' : 'var(--amber)', flexShrink: 0 }}>{porcentaje}%</span>
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--text-light)' }}>{prog.hechos} de {prog.aplicables} pasos completados</p>
+            </div>
+          )}
+          {t.fecha_ingreso && <p style={{ fontSize: '11px', color: 'var(--text-light)' }}>Ingreso: {new Date(t.fecha_ingreso + 'T00:00:00').toLocaleDateString('es-MX')}</p>}
+        </div>
+        {esCompleto ? (
+          <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', background: 'rgba(45,122,79,0.09)', color: '#2d7a4f', border: '1px solid rgba(45,122,79,0.22)', flexShrink: 0, marginTop: '2px' }}>Completado</span>
+        ) : (
+          <span style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.07em', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '99px', background: 'rgba(184,192,204,0.13)', color: '#B07D2A', border: '1px solid rgba(184,192,204,0.38)', flexShrink: 0, marginTop: '2px' }}>En proceso</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ── Comentarios de un pendiente ── */
+function ComentariosPendiente({ pendienteId, autor }) {
   const [comentarios, setComentarios] = useState([])
   const [texto, setTexto] = useState('')
-  const [autor, setAutor] = useState('Gabriela Muñoz')
   const [guardando, setGuardando] = useState(false)
 
-  useEffect(() => { cargar() }, [tareaId])
+  useEffect(() => { cargar() }, [pendienteId])
 
   const cargar = async () => {
-    const { data } = await supabase
-      .from('comentarios_admin')
-      .select('*')
-      .eq('tarea_id', tareaId)
-      .order('created_at', { ascending: true })
+    const { data } = await supabase.from('comentarios_pendientes').select('*').eq('pendiente_id', pendienteId).order('created_at', { ascending: true })
     setComentarios(data || [])
   }
-
   const agregar = async () => {
     if (!texto.trim()) return
     setGuardando(true)
-    await supabase.from('comentarios_admin').insert([{ tarea_id: tareaId, texto: texto.trim(), autor }])
-    setTexto('')
-    await cargar()
-    setGuardando(false)
+    await supabase.from('comentarios_pendientes').insert([{ pendiente_id: pendienteId, texto: texto.trim(), autor }])
+    setTexto(''); await cargar(); setGuardando(false)
   }
-
-  const fmt = (ts) => new Date(ts).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const fmt = ts => new Date(ts).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div style={{ marginTop: '12px', borderTop: '1px solid #f0f0f0', paddingTop: '12px' }}>
-      <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A9BAD', marginBottom: '8px' }}>Comentarios</p>
-      {comentarios.length === 0 && (
-        <p style={{ fontSize: '12px', color: '#B0BCC8', marginBottom: '8px' }}>Sin comentarios aún.</p>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+    <div style={{ marginTop: '10px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+      <p style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-light)', marginBottom: '8px' }}>Comentarios</p>
+      {comentarios.length === 0 && <p style={{ fontSize: '12px', color: 'var(--text-light)', marginBottom: '8px' }}>Sin comentarios.</p>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
         {comentarios.map(c => (
-          <div key={c.id} style={{ background: '#f7f8fa', borderRadius: '6px', padding: '8px 12px' }}>
-            <p style={{ fontSize: '12px', color: '#2C5282', marginBottom: '2px' }}>{c.texto}</p>
-            <p style={{ fontSize: '10px', color: '#8A9BAD' }}>{c.autor || 'Anónimo'} · {fmt(c.created_at)}</p>
+          <div key={c.id} style={{ background: 'var(--silver-light)', borderRadius: '6px', padding: '7px 10px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--navy-dark)', marginBottom: '2px' }}>{c.texto}</p>
+            <p style={{ fontSize: '10px', color: 'var(--text-light)' }}>{c.autor} · {fmt(c.created_at)}</p>
           </div>
         ))}
       </div>
       <div style={{ display: 'flex', gap: '6px' }}>
-        <input
-          value={texto}
-          onChange={e => setTexto(e.target.value)}
+        <input value={texto} onChange={e => setTexto(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); agregar() } }}
           placeholder="Escribe un comentario..."
-          style={{ flex: 1, padding: '7px 10px', border: '1px solid #e5e7eb', borderRadius: '5px', fontSize: '12px', fontFamily: 'inherit', outline: 'none' }}
-        />
-        <button
-          onClick={agregar}
-          disabled={guardando || !texto.trim()}
-          style={{ background: '#2C5282', color: '#B8C0CC', border: 'none', borderRadius: '5px', padding: '7px 14px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
-        >Enviar</button>
+          style={{ flex: 1, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '5px', fontSize: '12px', fontFamily: 'inherit', outline: 'none', background: 'var(--card)' }} />
+        <button onClick={agregar} disabled={guardando || !texto.trim()} className="btn-gold" style={{ padding: '7px 14px', fontSize: '11px' }}>Enviar</button>
       </div>
     </div>
   )
 }
 
-/* ── Tarjeta de tarea ── */
-function TareaCard({ tarea, onToggle, onEliminar }) {
+/* ── Tarjeta de pendiente ── */
+function PendienteCard({ p, onCompletar, autor }) {
   const [expanded, setExpanded] = useState(false)
   const [hovered, setHovered] = useState(false)
-
   return (
     <div
-      style={{
-        background: '#fff',
-        border: `1px solid ${hovered ? '#B8C0CC' : '#e5e7eb'}`,
-        borderLeft: `3px solid ${tarea.completado ? '#2d7a4f' : '#B8C0CC'}`,
-        borderRadius: '8px',
-        padding: '14px 16px',
-        transition: 'border-color 0.18s, box-shadow 0.18s',
-        boxShadow: hovered ? '0 4px 16px rgba(44,82,130,0.1)' : '0 1px 4px rgba(0,0,0,0.05)',
-        opacity: tarea.completado ? 0.72 : 1,
-      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      style={{ background: 'var(--card)', border: `1px solid ${hovered ? 'rgba(44,82,130,0.25)' : 'var(--border)'}`, borderLeft: '3px solid var(--gold)', borderRadius: '8px', padding: '14px 16px', transition: 'border-color 0.18s, box-shadow 0.18s', boxShadow: hovered ? 'var(--shadow-md)' : 'var(--shadow-sm)' }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-        {/* Checkbox */}
-        <button
-          onClick={() => onToggle(tarea)}
-          title={tarea.completado ? 'Marcar como pendiente' : 'Marcar como completada'}
-          style={{
-            width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
-            border: `2px solid ${tarea.completado ? '#2d7a4f' : '#B8C0CC'}`,
-            background: tarea.completado ? '#2d7a4f' : 'transparent',
-            color: '#fff', fontSize: '12px', fontWeight: '700',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background 0.25s, border-color 0.25s',
-            marginTop: '1px',
-          }}
-        >{tarea.completado ? '✓' : ''}</button>
-
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: '17px', fontWeight: '500', color: '#2C5282',
-            textDecoration: tarea.completado ? 'line-through' : 'none',
-            marginBottom: '2px', lineHeight: 1.3,
-            transition: 'text-decoration 0.2s',
-          }}>{tarea.titulo}</p>
-          {tarea.descripcion && (
-            <p style={{ fontSize: '12px', color: '#6B7A8D', lineHeight: 1.5 }}>{tarea.descripcion}</p>
-          )}
-          <p style={{ fontSize: '10px', color: '#B0BCC8', marginTop: '4px' }}>
-            {new Date(tarea.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
+          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '17px', fontWeight: '500', color: 'var(--navy-dark)', marginBottom: '2px', lineHeight: 1.3 }}>{p.titulo}</p>
+          {p.descripcion && <p style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{p.descripcion}</p>}
+          <p style={{ fontSize: '10px', color: 'var(--text-light)', marginTop: '4px' }}>
+            {new Date(p.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })}
           </p>
         </div>
-
         <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-          <button
-            onClick={() => setExpanded(x => !x)}
-            style={{ background: 'transparent', border: '1px solid #e5e7eb', borderRadius: '4px', padding: '4px 8px', fontSize: '11px', color: '#8A9BAD', cursor: 'pointer' }}
-          >{expanded ? 'Ocultar' : 'Comentarios'}</button>
-          <button
-            onClick={() => onEliminar(tarea.id)}
-            style={{ background: 'transparent', border: '1px solid #fcd5d5', borderRadius: '4px', padding: '4px 8px', fontSize: '11px', color: '#c97a7a', cursor: 'pointer' }}
-          >✕</button>
+          <button onClick={() => setExpanded(x => !x)}
+            style={{ background: 'transparent', border: '1px solid var(--border)', borderRadius: '4px', padding: '4px 8px', fontSize: '11px', color: 'var(--text-light)', cursor: 'pointer' }}>
+            {expanded ? 'Ocultar' : 'Notas'}
+          </button>
+          <button onClick={() => onCompletar(p.id)}
+            style={{ background: 'rgba(45,122,79,0.08)', border: '1px solid rgba(45,122,79,0.3)', borderRadius: '4px', padding: '4px 10px', fontSize: '11px', fontWeight: '600', color: '#2d7a4f', cursor: 'pointer', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(45,122,79,0.15)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(45,122,79,0.08)'}
+          >✓ Hecho</button>
         </div>
       </div>
-
-      {expanded && <SeccionComentarios tareaId={tarea.id} />}
-    </div>
-  )
-}
-
-/* ── Modal nueva tarea ── */
-function NuevaTareaModal({ onClose, onGuardar }) {
-  const [titulo, setTitulo] = useState('')
-  const [descripcion, setDescripcion] = useState('')
-  const [guardando, setGuardando] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!titulo.trim()) return
-    setGuardando(true)
-    const { data } = await supabase.from('tareas_admin').insert([{
-      titulo: titulo.trim(),
-      descripcion: descripcion.trim() || null,
-      asignado_a: 'Gabriela Muñoz',
-    }]).select().single()
-    onGuardar(data)
-    setGuardando(false)
-    onClose()
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(44,82,130,0.55)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
-      <div style={{ background: '#fff', borderRadius: '8px', width: '100%', maxWidth: '460px', boxShadow: '0 24px 80px rgba(44,82,130,0.3)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.4rem', borderBottom: '1px solid #f0f0f0' }}>
-          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#2C5282' }}>Nueva tarea</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '20px', color: '#8A9BAD', cursor: 'pointer' }}>×</button>
-        </div>
-        <form onSubmit={handleSubmit} style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A9BAD' }}>
-              Título <span style={{ color: '#B8C0CC' }}>*</span>
-            </label>
-            <input
-              value={titulo}
-              onChange={e => setTitulo(e.target.value)}
-              placeholder="¿Qué hay que hacer?"
-              required
-              autoFocus
-              className="field-input"
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8A9BAD' }}>Descripción</label>
-            <textarea
-              value={descripcion}
-              onChange={e => setDescripcion(e.target.value)}
-              placeholder="Detalles adicionales..."
-              rows={3}
-              className="field-input"
-              style={{ resize: 'vertical' }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid #f0f0f0' }}>
-            <button type="button" onClick={onClose} className="btn-ghost-dark">Cancelar</button>
-            <button type="submit" disabled={guardando} className="btn-gold" style={{ padding: '10px 22px' }}>
-              {guardando ? 'Guardando...' : 'Crear tarea'}
-            </button>
-          </div>
-        </form>
-      </div>
+      {expanded && <ComentariosPendiente pendienteId={p.id} autor={autor} />}
     </div>
   )
 }
 
 /* ── Página principal ── */
 export default function AdminTareas() {
-  const [tareas, setTareas] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [filtro] = useState('pendientes')
   const navigate = useNavigate()
+  const [tab, setTab]           = useState('en_proceso')
+  const [gabrielaId, setGabrielaId] = useState(null)
+  const [enProceso,  setEnProceso]  = useState([])
+  const [completados,setCompletados]= useState([])
+  const [pendientes, setPendientes] = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [userEmail,  setUserEmail]  = useState('')
+  const [userNombre, setUserNombre] = useState('Gabriela Muñoz')
+  const [descargando,setDescargando]= useState(false)
+  const [limpiando,  setLimpiando]  = useState(false)
+
+  // Nuevo pendiente
+  const [showForm,    setShowForm]    = useState(false)
+  const [titulo,      setTitulo]      = useState('')
+  const [descripcion, setDescripcion] = useState('')
+  const [guardando,   setGuardando]   = useState(false)
 
   useEffect(() => { cargar() }, [])
 
   const cargar = async () => {
-    const { data } = await supabase.from('tareas_admin').select('*').order('created_at', { ascending: false })
-    setTareas(data || [])
+    const [{ data: { user } }, { data: gabRow }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase.from('empleados').select('id').eq('nombre', 'Gabriela Muñoz').single(),
+    ])
+
+    if (user) {
+      setUserEmail(user.email || '')
+      const { data: emp } = await supabase.from('empleados').select('nombre').eq('user_id', user.id).single()
+      if (emp) setUserNombre(emp.nombre)
+    }
+
+    if (!gabRow) { setLoading(false); return }
+    const gId = gabRow.id
+    setGabrielaId(gId)
+
+    const [{ data: jobs }, { data: pends }] = await Promise.all([
+      supabase.from('trabajos').select('*').eq('encargado_id', gId).order('orden', { ascending: true }),
+      supabase.from('pendientes').select('*').eq('empleado_id', gId).order('created_at', { ascending: false }),
+    ])
+
+    setPendientes(pends || [])
+
+    if (jobs && jobs.length > 0) {
+      const { data: items } = await supabase.from('checklist').select('trabajo_id, estado').in('trabajo_id', jobs.map(j => j.id))
+      const prog = {}
+      ;(items || []).forEach(item => {
+        if (!prog[item.trabajo_id]) prog[item.trabajo_id] = { total: 0, aplicables: 0, hechos: 0, pendientes: 0 }
+        prog[item.trabajo_id].total++
+        if (item.estado !== 'no_aplica') prog[item.trabajo_id].aplicables++
+        if (item.estado === 'hecho')     prog[item.trabajo_id].hechos++
+        if (item.estado === 'pendiente') prog[item.trabajo_id].pendientes++
+      })
+      const enriquecidos = jobs.map(j => {
+        const p = prog[j.id] || { total: 0, aplicables: 0, hechos: 0, pendientes: 0 }
+        return { ...j, prog: p, esCompleto: p.total > 0 && p.pendientes === 0 }
+      })
+      setEnProceso(enriquecidos.filter(t => !t.esCompleto))
+      setCompletados(enriquecidos.filter(t => t.esCompleto))
+    }
+
     setLoading(false)
   }
 
-  const toggleCompletado = async (tarea) => {
-    const nuevo = !tarea.completado
-    await supabase.from('tareas_admin').update({ completado: nuevo }).eq('id', tarea.id)
-    setTareas(ts => ts.map(t => t.id === tarea.id ? { ...t, completado: nuevo } : t))
+  /* ── Pendientes CRUD ── */
+  const agregarPendiente = async (e) => {
+    e.preventDefault()
+    if (!titulo.trim() || !gabrielaId) return
+    setGuardando(true)
+    const { data } = await supabase.from('pendientes').insert([{ empleado_id: gabrielaId, titulo: titulo.trim(), descripcion: descripcion.trim() || null }]).select().single()
+    if (data) setPendientes(prev => [data, ...prev])
+    setTitulo(''); setDescripcion(''); setShowForm(false); setGuardando(false)
   }
 
-  const eliminar = async (id) => {
-    if (!window.confirm('¿Eliminar esta tarea? Esta acción no se puede deshacer.')) return
-    await supabase.from('tareas_admin').delete().eq('id', id)
-    setTareas(ts => ts.filter(t => t.id !== id))
+  const completarPendiente = async (id) => {
+    await supabase.from('pendientes').delete().eq('id', id)
+    setPendientes(prev => prev.filter(p => p.id !== id))
   }
 
-  const tareasFiltradas = tareas.filter(t =>
-    filtro === 'pendientes'  ? !t.completado :
-    filtro === 'completadas' ? t.completado  : true
-  )
+  /* ── Excel y limpieza ── */
+  const mesActual = () => {
+    const ahora = new Date()
+    return completados.filter(t => {
+      if (!t.ultima_actividad) return false
+      const d = new Date(t.ultima_actividad)
+      return d.getFullYear() === ahora.getFullYear() && d.getMonth() === ahora.getMonth()
+    })
+  }
 
-  const pendientes = tareas.filter(t => !t.completado).length
+  const descargarExcel = async () => {
+    setDescargando(true)
+    const del_mes = mesActual()
+    if (del_mes.length === 0) { alert('No hay trabajos completados este mes.'); setDescargando(false); return }
+    const fmt   = v => v ? new Date(v + 'T00:00:00').toLocaleDateString('es-MX') : ''
+    const fmtTs = v => v ? new Date(v).toLocaleDateString('es-MX') : ''
+    const ws = XLSX.utils.json_to_sheet(del_mes.map(t => ({
+      'Cliente':               t.cliente || '',
+      'Asunto':                t.asunto || '',
+      'Tipo instrumento':      t.numero_escritura || '',
+      'Número de instrumento': t.numero_instrumento || '',
+      'Fecha de ingreso':      fmt(t.fecha_ingreso),
+      'Fecha de completado':   fmtTs(t.ultima_actividad),
+    })))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Completados')
+    const mes = new Date().toLocaleString('es-MX', { month: 'long', year: 'numeric' }).replace(' ', '-')
+    XLSX.writeFile(wb, `completados-gabriela-${mes}.xlsx`)
+    setDescargando(false)
+  }
+
+  const limpiarMes = async () => {
+    const del_mes = mesActual()
+    if (del_mes.length === 0) { alert('No hay trabajos completados este mes.'); return }
+    const mes = new Date().toLocaleString('es-MX', { month: 'long', year: 'numeric' })
+    if (!window.confirm(`¿Eliminar ${del_mes.length} trabajo${del_mes.length !== 1 ? 's' : ''} completados de ${mes}? Esta acción no se puede deshacer.`)) return
+    setLimpiando(true)
+    await supabase.from('trabajos').delete().in('id', del_mes.map(t => t.id))
+    setCompletados(prev => prev.filter(t => !del_mes.find(d => d.id === t.id)))
+    setLimpiando(false)
+  }
+
+  const total = enProceso.length + completados.length
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f8fa', fontFamily: "'Montserrat', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: "'Montserrat', sans-serif" }}>
 
       {/* Navbar */}
-      <nav style={{ background: '#2C5282', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={() => navigate('/trabajos')}
-            style={{ background: 'transparent', border: 'none', color: '#B8C0CC', fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '0 4px', transition: 'transform 0.15s' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateX(-3px)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
-          >←</button>
-          <div style={{ width: '32px', height: '32px', border: '1.5px solid #B8C0CC', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '14px', fontWeight: '600', color: '#B8C0CC' }}>GM</span>
-          </div>
-          <span style={{ fontSize: '13px', fontWeight: '500', color: '#D6DFE8' }}>Gabriela Muñoz</span>
+      <header style={{ background: 'var(--navy-dark)', padding: '0 1.75rem', height: '64px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <button onClick={() => navigate('/trabajos')}
+          style={{ background: 'transparent', border: 'none', color: 'var(--gold)', fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '0 4px', transition: 'transform 0.15s', flexShrink: 0 }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'translateX(-3px)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'translateX(0)'}
+        >←</button>
+        <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#3A6298', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: '600', color: '#B8C0CC', flexShrink: 0 }}>GM</div>
+        <div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#ffffff', lineHeight: 1.1 }}>Gabriela Muñoz</div>
+          <div style={{ fontSize: '10px', color: 'var(--gold)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '2px' }}>{total} {total === 1 ? 'trabajo' : 'trabajos'}</div>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          style={{ background: '#B8C0CC', border: 'none', borderRadius: '5px', color: '#2C5282', fontSize: '11px', fontWeight: '700', padding: '6px 14px', cursor: 'pointer', letterSpacing: '0.06em', transition: 'background 0.15s' }}
-          onMouseEnter={e => e.currentTarget.style.background = '#A8B2BE'}
-          onMouseLeave={e => e.currentTarget.style.background = '#B8C0CC'}
-        >+ Nueva tarea</button>
-      </nav>
+        <div style={{ marginLeft: 'auto' }}>
+          <button className="btn-gold" onClick={() => gabrielaId && navigate(`/trabajos/nuevo?empleado=${gabrielaId}`)}>+ Nuevo trabajo</button>
+        </div>
+      </header>
 
-      {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, #3A6298 0%, #2C5282 100%)', padding: '40px 28px 44px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', border: '1px solid rgba(184,192,204,0.45)', borderRadius: '99px', padding: '5px 16px', marginBottom: '18px' }}>
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#B8C0CC' }} />
-          <span style={{ fontSize: '10px', fontWeight: '600', color: '#B8C0CC', letterSpacing: '0.18em', textTransform: 'uppercase' }}>Administración</span>
-        </div>
-        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '38px', fontWeight: '600', color: '#fff', margin: '0 0 8px', lineHeight: 1.1 }}>
-          Gabriela Muñoz
-        </h1>
-        <p style={{ fontSize: '13px', color: '#8A9BAD', margin: '0 0 24px' }}>Tareas y recordatorios</p>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '32px', fontWeight: '600', color: '#B8C0CC', margin: 0 }}>{pendientes}</p>
-          <p style={{ fontSize: '10px', color: '#8A9BAD', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Pendientes</p>
-        </div>
-      </div>
+      {/* Tabs */}
+      <TabBar
+        active={tab}
+        onChange={setTab}
+        counts={{ en_proceso: enProceso.length, completados: completados.length, pendientes: pendientes.length }}
+      />
 
-      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 24px 56px' }}>
+      <main className="anim-page-enter" style={{ maxWidth: '880px', margin: '0 auto', padding: '1.75rem 1.75rem 3rem' }}>
 
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {[1, 2, 3].map(i => (
-              <div key={i} style={{ height: '72px', borderRadius: '8px', background: 'linear-gradient(90deg,#e8eaed 25%,#f4f5f7 50%,#e8eaed 75%)', backgroundSize: '400px 100%', animation: 'shimmer 1.4s ease infinite' }} />
-            ))}
-          </div>
-        ) : tareasFiltradas.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#8A9BAD', fontSize: '14px' }}>
-            {filtro === 'pendientes' ? 'No hay tareas pendientes. ¡Todo al día! ✓' : 'No hay tareas aquí.'}
-          </div>
+          <Spinner text="Cargando..." />
+
+        ) : tab === 'en_proceso' ? (
+          enProceso.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>No hay trabajos en proceso.</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {enProceso.map(t => <TrabajoCard key={t.id} t={t} onClick={() => navigate(`/trabajos/${t.id}`)} />)}
+            </div>
+          )
+
+        ) : tab === 'completados' ? (
+          <>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button onClick={descargarExcel} disabled={descargando}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 14px', fontSize: '11px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', transition: 'background 0.15s', boxShadow: 'var(--shadow-sm)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--silver-light)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}
+              >⬇ Excel del mes</button>
+              {userEmail === ADMIN_EMAIL && (
+                <button onClick={limpiarMes} disabled={limpiando}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(192,57,43,0.07)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: '6px', padding: '8px 14px', fontSize: '11px', fontWeight: '600', color: '#c0392b', cursor: limpiando ? 'wait' : 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.13)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,57,43,0.07)'}
+                >🗑 Limpiar mes</button>
+              )}
+            </div>
+            {completados.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>No hay trabajos completados.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {completados.map(t => <TrabajoCard key={t.id} t={t} onClick={() => navigate(`/trabajos/${t.id}`)} />)}
+              </div>
+            )}
+          </>
+
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {tareasFiltradas.map(t => (
-              <TareaCard key={t.id} tarea={t} onToggle={toggleCompletado} onEliminar={eliminar} />
-            ))}
+          /* ── Tab Pendientes ── */
+          <div>
+            {!showForm ? (
+              <button onClick={() => setShowForm(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: '1px dashed rgba(184,192,204,0.5)', borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', color: 'var(--gold)', fontSize: '12px', fontWeight: '600', width: '100%', justifyContent: 'center', transition: 'border-color 0.15s, background 0.15s', marginBottom: '16px' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.background = 'var(--gold-light)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(184,192,204,0.5)'; e.currentTarget.style.background = 'none' }}
+              >+ Agregar recordatorio</button>
+            ) : (
+              <form onSubmit={agregarPendiente} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '10px', padding: '1.25rem', marginBottom: '16px', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <input autoFocus value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título del recordatorio..." required className="field-input" />
+                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Descripción (opcional)..." rows={2} className="field-input" style={{ resize: 'vertical' }} />
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  <button type="button" onClick={() => { setShowForm(false); setTitulo(''); setDescripcion('') }} className="btn-ghost-dark">Cancelar</button>
+                  <button type="submit" disabled={guardando || !titulo.trim()} className="btn-gold" style={{ padding: '9px 20px' }}>Agregar</button>
+                </div>
+              </form>
+            )}
+            {pendientes.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>No hay recordatorios pendientes.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {pendientes.map(p => <PendienteCard key={p.id} p={p} onCompletar={completarPendiente} autor={userNombre} />)}
+              </div>
+            )}
           </div>
         )}
-      </div>
-
-      {showModal && (
-        <NuevaTareaModal
-          onClose={() => setShowModal(false)}
-          onGuardar={(nueva) => { if (nueva) setTareas(ts => [nueva, ...ts]) }}
-        />
-      )}
+      </main>
     </div>
   )
 }
