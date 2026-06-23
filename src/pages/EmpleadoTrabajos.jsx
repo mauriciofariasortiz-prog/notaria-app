@@ -524,21 +524,21 @@ export default function EmpleadoTrabajos() {
 
         ) : tab === 'completados' ? (
           <>
-            {/* Acciones del mes */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button onClick={descargarExcel} disabled={descargando}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 14px', fontSize: '11px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: 'var(--shadow-sm)' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--silver-light)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
-              >⬇ Excel del mes</button>
-              {userEmail === ADMIN_EMAIL && (
+            {/* Acciones del mes — solo admin */}
+            {userEmail === ADMIN_EMAIL && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <button onClick={descargarExcel} disabled={descargando}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 14px', fontSize: '11px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', transition: 'background 0.15s, box-shadow 0.15s', boxShadow: 'var(--shadow-sm)' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--silver-light)'; e.currentTarget.style.boxShadow = 'var(--shadow-md)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--card)'; e.currentTarget.style.boxShadow = 'var(--shadow-sm)' }}
+                >⬇ Excel del mes</button>
                 <button onClick={limpiarMes} disabled={limpiando}
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(192,57,43,0.07)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: '6px', padding: '8px 14px', fontSize: '11px', fontWeight: '600', color: '#c0392b', cursor: limpiando ? 'wait' : 'pointer', transition: 'background 0.15s' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.13)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,57,43,0.07)'}
                 >🗑 Limpiar mes</button>
-              )}
-            </div>
+              </div>
+            )}
 
             {completados.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>No hay trabajos completados.</div>

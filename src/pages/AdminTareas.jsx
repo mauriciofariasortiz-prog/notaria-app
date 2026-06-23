@@ -343,20 +343,20 @@ export default function AdminTareas() {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                   <SectionLabel count={completados.length}>Completados</SectionLabel>
-                  <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
-                    <button onClick={descargarExcel} disabled={descargando}
-                      style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '5px', padding: '5px 10px', fontSize: '10px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', boxShadow: 'var(--shadow-sm)', transition: 'background 0.15s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--silver-light)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}
-                    >⬇ Excel del mes</button>
-                    {userEmail === ADMIN_EMAIL && (
+                  {userEmail === ADMIN_EMAIL && (
+                    <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
+                      <button onClick={descargarExcel} disabled={descargando}
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '5px', padding: '5px 10px', fontSize: '10px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', boxShadow: 'var(--shadow-sm)', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--silver-light)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}
+                      >⬇ Excel del mes</button>
                       <button onClick={limpiarMes} disabled={limpiando}
                         style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(192,57,43,0.07)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: '5px', padding: '5px 10px', fontSize: '10px', fontWeight: '600', color: '#c0392b', cursor: limpiando ? 'wait' : 'pointer', transition: 'background 0.15s' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.13)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,57,43,0.07)'}
                       >🗑 Limpiar mes</button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {completados.map(t => <TrabajoCard key={t.id} t={t} onClick={() => navigate(`/trabajos/${t.id}`)} />)}
@@ -373,8 +373,8 @@ export default function AdminTareas() {
               </div>
             )}
 
-            {/* Botones globales cuando solo hay En proceso (sin completados aún) */}
-            {enProceso.length > 0 && completados.length === 0 && (
+            {/* Botones globales cuando solo hay En proceso (sin completados aún) — solo admin */}
+            {userEmail === ADMIN_EMAIL && enProceso.length > 0 && completados.length === 0 && (
               <div style={{ display: 'flex', gap: '8px', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
                 <button onClick={descargarExcel} disabled={descargando}
                   style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '5px', padding: '7px 12px', fontSize: '11px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', boxShadow: 'var(--shadow-sm)' }}
