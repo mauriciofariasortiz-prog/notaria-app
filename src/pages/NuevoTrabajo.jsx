@@ -38,12 +38,15 @@ export default function NuevoTrabajo() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const empleadoParam = searchParams.get('empleado') || ''
+  const empleadoParam  = searchParams.get('empleado')   || ''
+  const asuntoFijo     = searchParams.get('asunto_fijo') || ''
+  const backParam      = searchParams.get('back')        || ''
 
   useEffect(() => {
     supabase.from('empleados').select('id, nombre').order('nombre').then(({ data }) => {
       setEmpleados(data || [])
       if (empleadoParam) setForm(f => ({ ...f, encargado_id: empleadoParam }))
+      if (asuntoFijo)    setForm(f => ({ ...f, asunto: asuntoFijo }))
     })
   }, [])
 
@@ -97,14 +100,15 @@ export default function NuevoTrabajo() {
           pasos.map(paso => ({ trabajo_id: nuevo.id, paso, estado: 'pendiente' }))
         )
       }
-      if (empleadoParam) navigate(`/empleados/${empleadoParam}`)
+      if (backParam)      navigate(backParam)
+      else if (empleadoParam) navigate(`/empleados/${empleadoParam}`)
       else navigate('/trabajos')
     }
 
     setLoading(false)
   }
 
-  const goBack = () => empleadoParam ? navigate(`/empleados/${empleadoParam}`) : navigate('/trabajos')
+  const goBack = () => backParam ? navigate(backParam) : empleadoParam ? navigate(`/empleados/${empleadoParam}`) : navigate('/trabajos')
   const inputClass = (name) => `field-input${errors[name] ? ' error' : ''}`
 
   const selectStyle = { padding: '10px 12px', borderRadius: '4px', border: '1px solid var(--silver-border)', fontSize: '13px', color: 'var(--text)', background: '#FAFBFC', fontFamily: 'inherit', cursor: 'pointer' }
@@ -138,10 +142,14 @@ export default function NuevoTrabajo() {
 
             {/* Asunto + campo "Otro" */}
             <Field label="Asunto" required error={errors.asunto}>
-              <select name="asunto" value={form.asunto} onChange={handleChange} onBlur={handleBlur} className={inputClass('asunto')}>
-                <option value="">Selecciona el tipo de asunto...</option>
-                {ASUNTOS.map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
+              {asuntoFijo ? (
+                <input value={asuntoFijo} readOnly className="field-input" style={{ background: 'var(--silver-light)', color: 'var(--text-muted)', cursor: 'not-allowed' }} />
+              ) : (
+                <select name="asunto" value={form.asunto} onChange={handleChange} onBlur={handleBlur} className={inputClass('asunto')}>
+                  <option value="">Selecciona el tipo de asunto...</option>
+                  {ASUNTOS.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+              )}
             </Field>
             {form.asunto === 'Otro' && (
               <Field label="Especifica el asunto" required error={errors.asuntoPersonalizado}>

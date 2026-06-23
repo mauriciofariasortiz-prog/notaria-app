@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
@@ -9,9 +9,8 @@ const ADMIN_EMAIL = 'mauriciofariasortiz@gmail.com'
 /* ── Tab bar ── */
 function TabBar({ active, onChange, counts }) {
   const tabs = [
-    { key: 'en_proceso',  label: 'En proceso',  count: counts.en_proceso  },
-    { key: 'completados', label: 'Completados', count: counts.completados  },
-    { key: 'pendientes',  label: 'Pendientes',  count: counts.pendientes   },
+    { key: 'trabajos',   label: 'Trabajos',   count: counts.trabajos   },
+    { key: 'pendientes', label: 'Pendientes', count: counts.pendientes  },
   ]
   return (
     <div style={{ background: 'var(--navy-dark)', borderBottom: '2px solid var(--gold)', padding: '0 1.75rem', display: 'flex' }}>
@@ -31,6 +30,17 @@ function TabBar({ active, onChange, counts }) {
           )}
         </button>
       ))}
+    </div>
+  )
+}
+
+/* ── SectionLabel ── */
+function SectionLabel({ children, count }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+      <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--navy-dark)', opacity: 0.75, whiteSpace: 'nowrap' }}>{children}</span>
+      {count !== undefined && <span style={{ fontSize: '10px', fontWeight: '600', color: 'var(--text-light)', background: 'var(--silver-light)', borderRadius: '99px', padding: '1px 8px', border: '1px solid var(--border)' }}>{count}</span>}
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
     </div>
   )
 }
@@ -157,7 +167,7 @@ function PendienteCard({ p, onCompletar, autor }) {
 /* ── Página principal ── */
 export default function AdminTareas() {
   const navigate = useNavigate()
-  const [tab, setTab]           = useState('en_proceso')
+  const [tab, setTab]            = useState('trabajos')
   const [gabrielaId, setGabrielaId] = useState(null)
   const [enProceso,  setEnProceso]  = useState([])
   const [completados,setCompletados]= useState([])
@@ -235,7 +245,7 @@ export default function AdminTareas() {
     setPendientes(prev => prev.filter(p => p.id !== id))
   }
 
-  /* ── Excel y limpieza ── */
+  /* ── Excel y limpieza del mes ── */
   const mesActual = () => {
     const ahora = new Date()
     return completados.filter(t => {
@@ -277,12 +287,12 @@ export default function AdminTareas() {
     setLimpiando(false)
   }
 
-  const total = enProceso.length + completados.length
+  const totalTrabajos = enProceso.length + completados.length
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: "'Montserrat', sans-serif" }}>
 
-      {/* Navbar */}
+      {/* Header */}
       <header style={{ background: 'var(--navy-dark)', padding: '0 1.75rem', height: '64px', display: 'flex', alignItems: 'center', gap: '14px' }}>
         <button onClick={() => navigate('/trabajos')}
           style={{ background: 'transparent', border: 'none', color: 'var(--gold)', fontSize: '22px', cursor: 'pointer', lineHeight: 1, padding: '0 4px', transition: 'transform 0.15s', flexShrink: 0 }}
@@ -292,18 +302,22 @@ export default function AdminTareas() {
         <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#3A6298', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cormorant Garamond', serif", fontSize: 15, fontWeight: '600', color: '#B8C0CC', flexShrink: 0 }}>GM</div>
         <div>
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: '500', color: '#ffffff', lineHeight: 1.1 }}>Gabriela Muñoz</div>
-          <div style={{ fontSize: '10px', color: 'var(--gold)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '2px' }}>{total} {total === 1 ? 'trabajo' : 'trabajos'}</div>
+          <div style={{ fontSize: '10px', color: 'var(--gold)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '2px' }}>Administración</div>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
-          <button className="btn-gold" onClick={() => gabrielaId && navigate(`/trabajos/nuevo?empleado=${gabrielaId}`)}>+ Nuevo trabajo</button>
-        </div>
+        {tab === 'trabajos' && (
+          <div style={{ marginLeft: 'auto' }}>
+            <button className="btn-gold"
+              onClick={() => gabrielaId && navigate(`/trabajos/nuevo?empleado=${gabrielaId}&back=/admin/gabriela&asunto_fijo=Copia+Certificada`)}
+            >+ Nuevo trabajo</button>
+          </div>
+        )}
       </header>
 
       {/* Tabs */}
       <TabBar
         active={tab}
         onChange={setTab}
-        counts={{ en_proceso: enProceso.length, completados: completados.length, pendientes: pendientes.length }}
+        counts={{ trabajos: totalTrabajos, pendientes: pendientes.length }}
       />
 
       <main className="anim-page-enter" style={{ maxWidth: '880px', margin: '0 auto', padding: '1.75rem 1.75rem 3rem' }}>
@@ -311,36 +325,60 @@ export default function AdminTareas() {
         {loading ? (
           <Spinner text="Cargando..." />
 
-        ) : tab === 'en_proceso' ? (
-          enProceso.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>No hay trabajos en proceso.</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {enProceso.map(t => <TrabajoCard key={t.id} t={t} onClick={() => navigate(`/trabajos/${t.id}`)} />)}
-            </div>
-          )
-
-        ) : tab === 'completados' ? (
+        ) : tab === 'trabajos' ? (
+          /* ── Tab Trabajos: En proceso + Completados ── */
           <>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button onClick={descargarExcel} disabled={descargando}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 14px', fontSize: '11px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', transition: 'background 0.15s', boxShadow: 'var(--shadow-sm)' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--silver-light)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}
-              >⬇ Excel del mes</button>
-              {userEmail === ADMIN_EMAIL && (
-                <button onClick={limpiarMes} disabled={limpiando}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(192,57,43,0.07)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: '6px', padding: '8px 14px', fontSize: '11px', fontWeight: '600', color: '#c0392b', cursor: limpiando ? 'wait' : 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.13)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,57,43,0.07)'}
-                >🗑 Limpiar mes</button>
-              )}
-            </div>
-            {completados.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>No hay trabajos completados.</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {completados.map(t => <TrabajoCard key={t.id} t={t} onClick={() => navigate(`/trabajos/${t.id}`)} />)}
+            {/* En proceso */}
+            {enProceso.length > 0 && (
+              <div style={{ marginBottom: '2rem' }}>
+                <SectionLabel count={enProceso.length}>En proceso</SectionLabel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {enProceso.map(t => <TrabajoCard key={t.id} t={t} onClick={() => navigate(`/trabajos/${t.id}`)} />)}
+                </div>
+              </div>
+            )}
+
+            {/* Completados */}
+            {completados.length > 0 && (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <SectionLabel count={completados.length}>Completados</SectionLabel>
+                  <div style={{ display: 'flex', gap: '6px', marginLeft: 'auto', flexShrink: 0 }}>
+                    <button onClick={descargarExcel} disabled={descargando}
+                      style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '5px', padding: '5px 10px', fontSize: '10px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', boxShadow: 'var(--shadow-sm)', transition: 'background 0.15s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--silver-light)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--card)'}
+                    >⬇ Excel del mes</button>
+                    {userEmail === ADMIN_EMAIL && (
+                      <button onClick={limpiarMes} disabled={limpiando}
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(192,57,43,0.07)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: '5px', padding: '5px 10px', fontSize: '10px', fontWeight: '600', color: '#c0392b', cursor: limpiando ? 'wait' : 'pointer', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.13)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,57,43,0.07)'}
+                      >🗑 Limpiar mes</button>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {completados.map(t => <TrabajoCard key={t.id} t={t} onClick={() => navigate(`/trabajos/${t.id}`)} />)}
+                </div>
+              </div>
+            )}
+
+            {totalTrabajos === 0 && (
+              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-light)', fontSize: '13px' }}>
+                No hay trabajos asignados.<br />
+                <button onClick={() => gabrielaId && navigate(`/trabajos/nuevo?empleado=${gabrielaId}&back=/admin/gabriela&asunto_fijo=Copia+Certificada`)}
+                  style={{ marginTop: '12px', background: 'none', border: '1px dashed rgba(184,192,204,0.5)', borderRadius: '6px', padding: '8px 16px', cursor: 'pointer', color: 'var(--gold)', fontSize: '12px', fontWeight: '600' }}
+                >+ Crear primer trabajo</button>
+              </div>
+            )}
+
+            {/* Botones globales cuando solo hay En proceso (sin completados aún) */}
+            {enProceso.length > 0 && completados.length === 0 && (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
+                <button onClick={descargarExcel} disabled={descargando}
+                  style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '5px', padding: '7px 12px', fontSize: '11px', fontWeight: '600', color: 'var(--navy-dark)', cursor: descargando ? 'wait' : 'pointer', boxShadow: 'var(--shadow-sm)' }}
+                >⬇ Excel del mes</button>
               </div>
             )}
           </>

@@ -321,7 +321,7 @@ export default function Trabajos() {
       if (j.encargado_id) counts[j.encargado_id] = (counts[j.encargado_id] || 0) + 1
     })
 
-    const lista = (emps || []).map(e => ({ ...e, total: counts[e.id] || 0 }))
+    const lista = (emps || []).filter(e => e.nombre !== 'Gabriela Muñoz').map(e => ({ ...e, total: counts[e.id] || 0 }))
     const idx = lista.findIndex(e => e.nombre === 'Mauricio FV')
     if (idx > 0) { const [mfv] = lista.splice(idx, 1); lista.unshift(mfv) }
 
